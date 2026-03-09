@@ -1,0 +1,407 @@
+AI-Based Car Service Assistance Application – Draft
+
+Application Type: Mobile Application
+Backend: Python Django
+Database: SQLite3
+Frontend: Flutter
+External Services: Google Maps API, Google Places API
+AI Function: Vehicle issue detection from image + problem explanation
+
+1. Project Overview
+
+The AI Car Service Assistance Application helps vehicle owners quickly identify car problems and find nearby trusted service centers.
+
+Users upload a photo of the car issue (for example engine leakage, tire damage, warning lights). The AI system analyzes the image and detects the possible problem.
+
+After detecting the issue, the system automatically:
+
+Explains the possible vehicle problem
+
+Suggests urgency level
+
+Searches nearby service centers from Google Maps
+
+Filters the top 5 service centers based on ratings and reviews
+
+Displays full details of those centers
+
+Allows users to call the center directly
+
+The application is designed to simplify vehicle troubleshooting and service center discovery.
+
+2. Main Portal
+
+This application contains one portal only:
+
+User Portal
+
+Users register and use the application to diagnose vehicle issues and locate nearby service centers.
+
+3. Application Workflow
+
+Step 1
+User opens the app and uploads a photo of the vehicle problem.
+
+Step 2
+AI analyzes the image and detects possible issues.
+
+Step 3
+The system explains the problem in simple language.
+
+Step 4
+The system identifies the user's location.
+
+Step 5
+Google Maps API searches nearby service centers.
+
+Step 6
+Centers are ranked based on:
+
+Rating
+
+Review count
+
+Distance
+
+Service category related to the issue
+
+Step 7
+Top 5 service centers are displayed.
+
+Step 8
+User can:
+
+View details
+
+Call the center
+
+Navigate to location
+
+4. Required Screens
+Authentication Screens
+1. Splash Screen
+
+Purpose
+Load the application and check login session.
+
+Design
+Clean screen with car icon animation and application logo.
+
+2. User Registration Screen
+
+Fields
+
+Full Name
+Phone Number
+Email
+Password
+Confirm Password
+
+Features
+
+Input validation
+Account creation
+
+3. Login Screen
+
+Fields
+
+Email or Phone
+Password
+
+Options
+
+Forgot password
+Login button
+
+Main Application Screens
+4. Home Dashboard
+
+Purpose
+Main entry point of the application.
+
+Sections
+
+Upload vehicle issue photo
+Recent scans
+Quick help information
+
+Buttons
+
+Scan Car Problem
+My Scan History
+Profile
+
+Design
+
+Card-based layout with simple icons.
+
+5. Upload Vehicle Problem Screen
+
+Purpose
+Allow users to upload images.
+
+Options
+
+Take photo from camera
+Upload image from gallery
+
+Input
+
+Optional text description
+
+Example
+
+"Strange smoke from engine"
+
+Buttons
+
+Analyze Problem
+
+6. AI Analysis Processing Screen
+
+Purpose
+Show that AI is analyzing the image.
+
+Design
+
+Animated progress indicator
+Message like:
+
+"Analyzing vehicle issue..."
+
+7. AI Diagnosis Result Screen
+
+Displays
+
+Detected issue
+Problem explanation
+Possible causes
+Urgency level
+
+Example Output
+
+Detected issue
+Possible engine oil leakage
+
+Explanation
+Oil may be leaking from gasket or oil filter.
+
+Urgency
+Medium priority – service recommended soon.
+
+8. Nearby Service Centers Screen
+
+After diagnosis, the system automatically searches nearby service centers.
+
+Features
+
+Uses Google Maps API and Places API.
+
+Shows
+
+Top 5 service centers based on:
+
+Ratings
+Number of reviews
+Distance from user
+
+Each card displays
+
+Service center name
+Rating
+Number of reviews
+Distance
+Address
+
+Buttons
+
+View details
+
+9. Service Center Detail Screen
+
+Displays
+
+Service center name
+Location map
+Full address
+Phone number
+Opening hours
+Services offered
+Customer reviews
+
+Actions
+
+Call service center
+Open navigation in Google Maps
+
+10. Call Service Center Screen
+
+Shows
+
+Phone number
+Call button
+
+This uses the phone dialer.
+
+11. Scan History Screen
+
+Users can view previous scans.
+
+Information stored
+
+Uploaded image
+Detected issue
+Date
+Recommended service centers
+
+12. Profile Screen
+
+Displays
+
+User name
+Email
+Phone number
+Total scans performed
+
+Options
+
+Edit profile
+Logout
+
+5. AI Vehicle Issue Detection
+
+The AI model analyzes uploaded images.
+
+Possible detectable problems
+
+Flat tire
+Oil leakage
+Broken headlight
+Battery corrosion
+Engine smoke
+Brake damage
+Loose belts
+Coolant leakage
+
+AI model output includes
+
+Problem category
+Confidence score
+Explanation
+Recommended service type
+
+Example
+
+Detected issue: Flat tire
+Confidence: 92%
+
+Explanation
+The tire appears damaged or deflated.
+
+Recommended service
+Tire repair or replacement.
+
+6. Service Center Search Logic
+
+After detecting the issue, the system determines the required service type.
+
+Example mapping
+
+Flat tire → Tire repair shop
+Oil leakage → Engine service center
+Brake issue → Brake specialist
+
+Then Google Places API searches nearby service centers.
+
+Filtering logic
+
+Distance within 10 km
+Rating above 3.5
+Review count considered
+Sort by rating and distance
+
+Top 5 centers are returned.
+
+7. Google Maps Integration
+
+The application uses
+
+Google Maps API
+Google Places API
+
+Features
+
+Location detection
+Nearby service center search
+Map navigation
+Review data retrieval
+
+8. Real World Use Case Example
+
+User sees oil leak under car.
+
+User opens the app.
+
+Uploads a photo of the leak.
+
+AI detects oil leakage.
+
+App explains the issue.
+
+System finds nearby mechanics.
+
+Top 5 centers appear.
+
+User calls the nearest center.
+
+Problem solved quickly.
+
+9. System Architecture
+
+Frontend
+
+Flutter mobile application
+
+Backend
+
+Django REST APIs
+
+AI Module
+
+Image analysis model using Python
+
+External APIs
+
+Google Maps API
+Google Places API
+
+Database
+
+SQLite3
+
+Stores
+
+Users
+Scan history
+Detected issues
+Recommended centers
+
+10. Security and Data Handling
+
+Secure login authentication
+Image upload validation
+Encrypted user passwords
+Location permission control
+Minimal personal data storage
+
+11. Key Features Summary
+
+AI vehicle problem detection from images
+Automatic explanation of car issues
+Nearby service center discovery
+Top 5 service center recommendations
+Google Maps integration
+Direct phone calling to service centers
+Scan history tracking
+Simple and user-friendly interface
