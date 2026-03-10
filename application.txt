@@ -4,7 +4,7 @@ Application Type: Mobile Application
 Backend: Python Django
 Database: SQLite3
 Frontend: Flutter
-External Services: Google Maps API, Google Places API
+External Services: Mappls
 AI Function: Vehicle issue detection from image + problem explanation
 
 1. Project Overview
@@ -52,7 +52,7 @@ Step 4
 The system identifies the user's location.
 
 Step 5
-Google Maps API searches nearby service centers.
+Mappls integration searches nearby service centers.
 
 Step 6
 Centers are ranked based on:

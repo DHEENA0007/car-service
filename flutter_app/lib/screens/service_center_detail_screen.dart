@@ -1,37 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/theme.dart';
+import '../services/api_service.dart';
+import 'map_navigation_screen.dart';
 
-class ServiceCenterDetailScreen extends StatelessWidget {
+class ServiceCenterDetailScreen extends StatefulWidget {
   final Map<String, dynamic> centerData;
 
   const ServiceCenterDetailScreen({super.key, required this.centerData});
 
-  Future<void> _makeCall(String phone) async {
-    final uri = Uri(scheme: 'tel', path: phone);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+  @override
+  State<ServiceCenterDetailScreen> createState() =>
+      _ServiceCenterDetailScreenState();
+}
+
+class _ServiceCenterDetailScreenState
+    extends State<ServiceCenterDetailScreen> {
+  String _phone = '';
+  bool _loadingPhone = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _phone = widget.centerData['phone_number'] ?? '';
+    if (_phone.isEmpty) {
+      final eloc = widget.centerData['place_id'] ?? '';
+      if (eloc.isNotEmpty) _fetchPlaceDetail(eloc);
     }
   }
 
-  Future<void> _openMaps() async {
-    final lat = centerData['latitude'];
-    final lng = centerData['longitude'];
+  Future<void> _fetchPlaceDetail(String eloc) async {
+    setState(() => _loadingPhone = true);
+    try {
+      final result = await ApiService.getPlaceDetail(eloc);
+      final detail = result['data'] as Map<String, dynamic>? ?? {};
+      setState(() {
+        _phone = detail['phone_number'] ?? '';
+      });
+    } catch (_) {}
+    setState(() => _loadingPhone = false);
+  }
 
-    if (lat != null && lng != null) {
-      final uri = Uri.parse(
-          'https://www.google.com/maps/search/?api=1&query=$lat,$lng&query_place_id=${centerData['place_id'] ?? ''}');
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    }
+  Future<void> _makeCall() async {
+    if (_phone.isEmpty) return;
+    final uri = Uri(scheme: 'tel', path: _phone);
+    if (await canLaunchUrl(uri)) await launchUrl(uri);
+  }
+
+  void _openMaps() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MapNavigationScreen(centerData: widget.centerData),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final rating = (centerData['rating'] ?? 0).toDouble();
-    final reviews = centerData['total_reviews'] ?? 0;
+    final centerData = widget.centerData;
 
     return Scaffold(
       appBar: AppBar(
@@ -82,38 +112,58 @@ class ServiceCenterDetailScreen extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
-                    // Rating
+                    // Mappls verified + distance row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ...List.generate(5, (i) {
-                          return Icon(
-                            i < rating.floor()
-                                ? Icons.star
-                                : (i < rating
-                                    ? Icons.star_half
-                                    : Icons.star_border),
-                            color: const Color(0xFFFFB300),
-                            size: 22,
-                          );
-                        }),
-                        const SizedBox(width: 8),
-                        Text(
-                          rating.toStringAsFixed(1),
-                          style: const TextStyle(
-                            color: AppTheme.textPrimary,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 18,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1565C0).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: const Color(0xFF1565C0)
+                                    .withValues(alpha: 0.3)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.verified,
+                                  size: 13, color: Color(0xFF1565C0)),
+                              SizedBox(width: 5),
+                              Text(
+                                'Verified Location',
+                                style: TextStyle(
+                                  color: Color(0xFF1565C0),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$reviews reviews',
-                      style: const TextStyle(
-                          color: AppTheme.textMuted, fontSize: 14),
-                    ),
+                    if ((centerData['distance'] ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.directions_car,
+                              size: 15, color: AppTheme.accentColor),
+                          const SizedBox(width: 5),
+                          Text(
+                            centerData['distance'] as String,
+                            style: const TextStyle(
+                              color: AppTheme.accentColor,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               )
@@ -129,10 +179,9 @@ class ServiceCenterDetailScreen extends StatelessWidget {
                   Expanded(
                     child: _buildActionButton(
                       Icons.call,
-                      'Call Now',
+                      _loadingPhone ? 'Loading...' : (_phone.isEmpty ? 'No Phone' : 'Call Now'),
                       AppTheme.success,
-                      () => _makeCall(
-                          centerData['phone_number'] ?? ''),
+                      _phone.isEmpty ? null : _makeCall,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -149,6 +198,16 @@ class ServiceCenterDetailScreen extends StatelessWidget {
 
               const SizedBox(height: 20),
 
+              // Mappls Static Map
+              if (centerData['latitude'] != null && centerData['longitude'] != null)
+                _buildStaticMap(
+                  centerData['latitude'] as num,
+                  centerData['longitude'] as num,
+                ).animate().fadeIn(delay: 250.ms),
+
+              if (centerData['latitude'] != null && centerData['longitude'] != null)
+                const SizedBox(height: 20),
+
               // Details
               _buildDetailSection(
                 Icons.location_on,
@@ -162,7 +221,9 @@ class ServiceCenterDetailScreen extends StatelessWidget {
               _buildDetailSection(
                 Icons.phone,
                 'Phone Number',
-                centerData['phone_number'] ?? 'N/A',
+                _loadingPhone
+                    ? 'Fetching...'
+                    : (_phone.isEmpty ? 'Not available' : _phone),
                 AppTheme.success,
               ).animate().fadeIn(delay: 400.ms).slideX(begin: 0.1, end: 0),
 
@@ -199,8 +260,7 @@ class ServiceCenterDetailScreen extends StatelessWidget {
               SizedBox(
                 height: 56,
                 child: ElevatedButton.icon(
-                  onPressed: () =>
-                      _makeCall(centerData['phone_number'] ?? ''),
+                  onPressed: _phone.isEmpty ? null : _makeCall,
                   icon: const Icon(Icons.call, color: Colors.white),
                   label: const Text(
                     'Call Service Center',
@@ -228,7 +288,7 @@ class ServiceCenterDetailScreen extends StatelessWidget {
                   onPressed: _openMaps,
                   icon: const Icon(Icons.navigation, color: AppTheme.primaryColor),
                   label: const Text(
-                    'Open in Google Maps',
+                    'Open in Maps',
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w600,
@@ -252,26 +312,85 @@ class ServiceCenterDetailScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildStaticMap(num lat, num lng) {
+    return GestureDetector(
+      onTap: _openMaps,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        child: SizedBox(
+          height: 180,
+          child: Stack(
+            children: [
+              FlutterMap(
+                options: MapOptions(
+                  initialCenter: LatLng(lat.toDouble(), lng.toDouble()),
+                  initialZoom: 15,
+                  interactionOptions: const InteractionOptions(
+                    flags: InteractiveFlag.none,
+                  ),
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.carservice.car_service_app',
+                  ),
+                  MarkerLayer(markers: [
+                    Marker(
+                      point: LatLng(lat.toDouble(), lng.toDouble()),
+                      child: const Icon(Icons.location_on,
+                          color: Color(0xFFE53935), size: 36),
+                    ),
+                  ]),
+                ],
+              ),
+              Positioned(
+                bottom: 10,
+                right: 10,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.navigation, color: Colors.white, size: 14),
+                      SizedBox(width: 4),
+                      Text('Open Maps',
+                          style: TextStyle(color: Colors.white, fontSize: 12)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildActionButton(
-      IconData icon, String label, Color color, VoidCallback onTap) {
+      IconData icon, String label, Color color, VoidCallback? onTap) {
+    final active = onTap != null;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
+          color: color.withValues(alpha: active ? 0.15 : 0.05),
           borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
+          border: Border.all(color: color.withValues(alpha: active ? 0.3 : 0.1)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 22),
+            Icon(icon, color: active ? color : AppTheme.textMuted, size: 22),
             const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
-                color: color,
+                color: active ? color : AppTheme.textMuted,
                 fontWeight: FontWeight.w600,
                 fontSize: 15,
               ),

@@ -123,8 +123,7 @@ class ServiceCentersScreen extends StatelessWidget {
 
   Widget _buildCenterCard(
       BuildContext context, Map<String, dynamic> center, int index) {
-    final rating = (center['rating'] ?? 0).toDouble();
-    final reviews = center['total_reviews'] ?? 0;
+    final hasPhone = (center['phone_number'] ?? '').toString().isNotEmpty;
 
     return GestureDetector(
       onTap: () {
@@ -153,8 +152,9 @@ class ServiceCentersScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header row with ranking
+            // Header: rank badge + name + Mappls verified chip
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   width: 36,
@@ -176,13 +176,78 @@ class ServiceCentersScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    center['name'] ?? 'Service Center',
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        center['name'] ?? 'Service Center',
+                        style: const TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Mappls verified badge
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1565C0).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                  color: const Color(0xFF1565C0)
+                                      .withValues(alpha: 0.3)),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.verified,
+                                    size: 11, color: Color(0xFF1565C0)),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Mappls Verified',
+                                  style: TextStyle(
+                                    color: Color(0xFF1565C0),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (hasPhone) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppTheme.success.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.phone,
+                                      size: 11, color: AppTheme.success),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Has Contact',
+                                    style: TextStyle(
+                                      color: AppTheme.success,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -190,45 +255,12 @@ class ServiceCentersScreen extends StatelessWidget {
 
             const SizedBox(height: 14),
 
-            // Rating & Reviews
-            Row(
-              children: [
-                ...List.generate(5, (i) {
-                  return Icon(
-                    i < rating.floor()
-                        ? Icons.star
-                        : (i < rating ? Icons.star_half : Icons.star_border),
-                    color: const Color(0xFFFFB300),
-                    size: 18,
-                  );
-                }),
-                const SizedBox(width: 8),
-                Text(
-                  rating.toStringAsFixed(1),
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '($reviews reviews)',
-                  style: const TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
             // Address
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.location_on, color: AppTheme.textMuted, size: 18),
+                const Icon(Icons.location_on,
+                    color: AppTheme.textMuted, size: 16),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -244,22 +276,24 @@ class ServiceCentersScreen extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
 
-            // Distance
+            // Distance + View Details
             Row(
               children: [
-                const Icon(Icons.near_me, color: AppTheme.accentColor, size: 18),
+                const Icon(Icons.directions_car,
+                    color: AppTheme.accentColor, size: 16),
                 const SizedBox(width: 6),
-                Text(
-                  center['distance'] ?? 'N/A',
-                  style: const TextStyle(
-                    color: AppTheme.accentColor,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
+                Expanded(
+                  child: Text(
+                    center['distance'] ?? 'N/A',
+                    style: const TextStyle(
+                      color: AppTheme.accentColor,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
-                const Spacer(),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 8),

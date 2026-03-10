@@ -190,19 +190,18 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
           ),
           child: Row(
             children: [
-              // Urgency Icon
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: urgencyColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  AppTheme.getUrgencyIcon(urgency),
-                  color: urgencyColor,
-                  size: 26,
-                ),
+              // Uploaded image thumbnail (or urgency icon fallback)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: scan['image'] != null
+                    ? Image.network(
+                        scan['image'] as String,
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _urgencyIcon(urgencyColor, urgency),
+                      )
+                    : _urgencyIcon(urgencyColor, urgency),
               ),
               const SizedBox(width: 14),
               // Info
@@ -271,5 +270,17 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
         .animate()
         .fadeIn(delay: (100 * index).ms, duration: 400.ms)
         .slideX(begin: 0.05, end: 0);
+  }
+
+  Widget _urgencyIcon(Color color, String urgency) {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(AppTheme.getUrgencyIcon(urgency), color: color, size: 28),
+    );
   }
 }

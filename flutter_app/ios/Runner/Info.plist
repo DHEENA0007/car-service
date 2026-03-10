@@ -45,5 +45,17 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Location permissions for Mappls nearby service center search -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app uses your location to find nearby vehicle service centers.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>This app uses your location to find nearby vehicle service centers.</string>
+	<!-- Mappls Map SDK keys -->
+	<key>MMIClientId</key>
+	<string>96dHZVzsAutngWfV72ksoMgaUFsA2BdfV_AtkbWt5S5KDpZl-9CGqFquABBgVJ4Fvq7ocdFOLFn5OtlgTOyHrA==</string>
+	<key>MMIClientSecret</key>
+	<string>lrFxI-iSEg_u3yHAIfkTkesbRlAnsZhrrnIJXyI1b58eoyKMPO8MkCjS5IZ6y6GPz9cZUup3yOmwfXq7pAB38T3eaGwNMTEi</string>
+	<key>MMIMapSDKKey</key>
+	<string>fb2c38368738edfba5271fcfe7b5bcf7</string>
 </dict>
 </plist>

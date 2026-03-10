@@ -88,7 +88,7 @@ Analyze the vehicle issue shown in this image thoroughly."""
                     ],
                 }
             ],
-            model="llama-3.2-90b-vision-preview",
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
             temperature=0.3,
             max_completion_tokens=1024,
             top_p=1,
@@ -176,36 +176,45 @@ def _validate_result(result):
     return result
 
 
-# Mapping of detected issues to service center search keywords
+# Mapping of detected issues to Mappls Nearby API search keywords.
+# Uses terms that yield the best POI results on Mappls (MapmyIndia) in India.
 ISSUE_SERVICE_MAPPING = {
-    "flat tire": "tire repair shop",
-    "tire": "tire repair shop",
-    "oil leak": "engine repair service",
-    "oil": "oil change service",
-    "engine": "engine repair mechanic",
-    "brake": "brake repair specialist",
-    "headlight": "auto electrical repair",
-    "battery": "auto battery service",
-    "smoke": "engine repair service",
-    "coolant": "radiator repair service",
-    "belt": "auto repair mechanic",
-    "windshield": "auto glass repair",
-    "dent": "auto body repair",
-    "scratch": "auto body paint shop",
-    "exhaust": "exhaust system repair",
-    "suspension": "suspension repair service",
-    "transmission": "transmission repair",
+    "flat tire": "tyre puncture shop",
+    "tire": "tyre puncture shop",
+    "tyre": "tyre puncture shop",
+    "wheel": "tyre puncture shop",
+    "oil leak": "car service center",
+    "oil": "car service center",
+    "engine": "car service center",
+    "brake": "car service center",
+    "headlight": "automobile workshop",
+    "light": "automobile workshop",
+    "battery": "car battery shop",
+    "smoke": "car service center",
+    "coolant": "car service center",
+    "radiator": "car service center",
+    "belt": "automobile workshop",
+    "windshield": "automobile workshop",
+    "glass": "automobile workshop",
+    "dent": "denting painting shop",
+    "scratch": "denting painting shop",
+    "paint": "denting painting shop",
+    "exhaust": "automobile workshop",
+    "suspension": "car service center",
+    "transmission": "car service center",
+    "ac": "car ac repair",
+    "air condition": "car ac repair",
 }
 
 
 def get_service_search_keyword(detected_issue):
-    """Map detected issue to a service center search keyword."""
+    """Map detected issue to a Mappls-friendly service center search keyword."""
     if not detected_issue:
-        return "car repair service"
+        return "car service center"
 
     issue_lower = detected_issue.lower()
     for keyword, service_type in ISSUE_SERVICE_MAPPING.items():
         if keyword in issue_lower:
             return service_type
 
-    return "car repair service"
+    return "car service center"

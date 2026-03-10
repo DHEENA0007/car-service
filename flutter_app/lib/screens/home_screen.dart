@@ -103,6 +103,150 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _showQuickHelp() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.cardBg,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.65,
+        maxChildSize: 0.9,
+        minChildSize: 0.4,
+        builder: (_, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceBg,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Quick Help',
+                style: TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Tips for using AutoDiagno effectively',
+                style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
+              ),
+              const SizedBox(height: 24),
+              ..._quickHelpItems().map((item) => _buildHelpItem(item)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Map<String, dynamic>> _quickHelpItems() => [
+        {
+          'icon': Icons.camera_alt,
+          'color': AppTheme.primaryColor,
+          'title': 'Take a Clear Photo',
+          'desc':
+              'Capture a well-lit, close-up image of the problem area. Avoid blurry or dark photos for best AI results.',
+        },
+        {
+          'icon': Icons.description,
+          'color': AppTheme.info,
+          'title': 'Add a Description',
+          'desc':
+              'Describe the symptom in the text field (e.g., "Oil dripping from below engine"). This improves AI accuracy.',
+        },
+        {
+          'icon': Icons.location_on,
+          'color': AppTheme.accentColor,
+          'title': 'Allow Location Access',
+          'desc':
+              'Grant location permission so we can find the nearest service centers using Mappls maps.',
+        },
+        {
+          'icon': Icons.star,
+          'color': const Color(0xFFFFB300),
+          'title': 'Top-Rated Centers',
+          'desc':
+              'We show the top 5 nearby service centers sorted by distance and rating for your specific issue.',
+        },
+        {
+          'icon': Icons.call,
+          'color': AppTheme.success,
+          'title': 'Call Directly',
+          'desc':
+              'Tap "Call Now" on any service center card to call them instantly without leaving the app.',
+        },
+        {
+          'icon': Icons.history,
+          'color': AppTheme.warning,
+          'title': 'Scan History',
+          'desc':
+              'All your diagnoses are saved in History. Swipe left on a scan to delete it.',
+        },
+      ];
+
+  Widget _buildHelpItem(Map<String, dynamic> item) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceBg,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: (item['color'] as Color).withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(item['icon'] as IconData,
+                color: item['color'] as Color, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item['title'] as String,
+                  style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item['desc'] as String,
+                  style: const TextStyle(
+                      color: AppTheme.textMuted, fontSize: 13, height: 1.4),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDashboard() {
     return SafeArea(
       child: RefreshIndicator(
@@ -321,7 +465,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 'Quick Help',
                 'Get tips',
                 AppTheme.warning,
-                () {},
+                _showQuickHelp,
               ),
             ),
           ],

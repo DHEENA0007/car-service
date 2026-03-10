@@ -20,6 +20,7 @@ from .serializers import (
     ServiceCenterSerializer,
 )
 from .ai_service import analyze_vehicle_image, get_service_search_keyword
+from .mappls_service import search_nearby_service_centers, get_place_detail, reverse_geocode, get_route
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,44 @@ def login(request):
         "message": "Invalid credentials.",
         "errors": serializer.errors,
     }, status=status.HTTP_401_UNAUTHORIZED)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def forgot_password(request):
+    """
+    Accept an email and generate a new temporary password for the user.
+    In production replace the email section with a proper mail backend.
+    """
+    email = request.data.get("email", "").strip()
+    if not email:
+        return Response({
+            "success": False,
+            "message": "Email is required.",
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        # Return success anyway to avoid user enumeration
+        return Response({
+            "success": True,
+            "message": "If this email is registered, a reset link has been sent.",
+        })
+
+    # Generate a temporary password
+    import secrets, string
+    temp_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(10))
+    user.set_password(temp_password)
+    user.save()
+
+    # Log for development (replace with email sending in production)
+    logger.info(f"Password reset for {email}. Temp password: {temp_password}")
+
+    return Response({
+        "success": True,
+        "message": "If this email is registered, a reset link has been sent.",
+    })
 
 
 @api_view(["POST"])
@@ -158,90 +197,39 @@ def analyze_image(request):
     scan.is_analyzed = True
     scan.save()
 
-    # Generate mock nearby service centers based on the detected issue
+    # Search real nearby service centers using Mappls API
     service_keyword = get_service_search_keyword(scan.detected_issue)
-    _create_sample_service_centers(scan, service_keyword)
+    latitude = request.data.get("latitude")
+    longitude = request.data.get("longitude")
+    logger.info(f"Location received: lat={latitude}, lng={longitude}, keyword={service_keyword}")
 
-    # Return full result
-    result_serializer = ScanHistorySerializer(scan)
+    centers = []
+    if latitude and longitude:
+        try:
+            centers = search_nearby_service_centers(
+                latitude=float(latitude),
+                longitude=float(longitude),
+                keyword=service_keyword,
+            )
+        except (ValueError, TypeError) as e:
+            logger.error(f"Location parse error: {e}")
+    else:
+        logger.warning("No location provided by client – skipping Mappls search.")
+
+    if centers:
+        for center_data in centers:
+            ServiceCenter.objects.create(scan=scan, **center_data)
+        logger.info(f"Saved {len(centers)} Mappls service centers for scan {scan.id}.")
+    else:
+        logger.warning("Mappls returned no results — no location or no nearby centers found.")
+
+    # Return full result (pass request for absolute image URLs)
+    result_serializer = ScanHistorySerializer(scan, context={"request": request})
     return Response({
         "success": True,
         "message": "Vehicle issue analyzed successfully.",
         "data": result_serializer.data,
     }, status=status.HTTP_200_OK)
-
-
-def _create_sample_service_centers(scan, service_keyword):
-    """
-    Create sample service centers for the scan.
-    In production, this would call Google Places API.
-    For now, provides realistic sample data.
-    """
-    sample_centers = [
-        {
-            "name": "AutoCare Pro Service Center",
-            "address": "123 Main Street, Near City Center, Bangalore 560001",
-            "phone_number": "+91 9876543210",
-            "rating": 4.7,
-            "total_reviews": 342,
-            "distance": "1.2 km",
-            "latitude": 12.9716,
-            "longitude": 77.5946,
-            "opening_hours": "Mon-Sat: 8:00 AM - 8:00 PM, Sun: 9:00 AM - 5:00 PM",
-            "services_offered": f"{service_keyword}, General maintenance, Oil change, Brake repair",
-        },
-        {
-            "name": "Quick Fix Auto Workshop",
-            "address": "456 MG Road, Koramangala, Bangalore 560034",
-            "phone_number": "+91 9876543211",
-            "rating": 4.5,
-            "total_reviews": 218,
-            "distance": "2.5 km",
-            "latitude": 12.9352,
-            "longitude": 77.6245,
-            "opening_hours": "Mon-Sat: 7:30 AM - 9:00 PM",
-            "services_offered": f"{service_keyword}, Engine diagnostics, Suspension repair",
-        },
-        {
-            "name": "Mahindra First Choice Services",
-            "address": "789 Outer Ring Road, HSR Layout, Bangalore 560102",
-            "phone_number": "+91 9876543212",
-            "rating": 4.4,
-            "total_reviews": 567,
-            "distance": "3.8 km",
-            "latitude": 12.9141,
-            "longitude": 77.6501,
-            "opening_hours": "Mon-Sun: 8:00 AM - 8:00 PM",
-            "services_offered": f"{service_keyword}, Multi-brand service, AC repair, Denting & painting",
-        },
-        {
-            "name": "GoMechanic - Indiranagar",
-            "address": "101 12th Main Road, Indiranagar, Bangalore 560038",
-            "phone_number": "+91 9876543213",
-            "rating": 4.3,
-            "total_reviews": 892,
-            "distance": "4.1 km",
-            "latitude": 12.9784,
-            "longitude": 77.6408,
-            "opening_hours": "Mon-Sat: 9:00 AM - 7:00 PM",
-            "services_offered": f"{service_keyword}, Periodic maintenance, Battery replacement, Tyre services",
-        },
-        {
-            "name": "Bosch Car Service Center",
-            "address": "202 Bannerghatta Road, JP Nagar, Bangalore 560078",
-            "phone_number": "+91 9876543214",
-            "rating": 4.2,
-            "total_reviews": 445,
-            "distance": "5.3 km",
-            "latitude": 12.9081,
-            "longitude": 77.5929,
-            "opening_hours": "Mon-Fri: 8:30 AM - 6:30 PM, Sat: 9:00 AM - 4:00 PM",
-            "services_offered": f"{service_keyword}, Electronic diagnostics, Clutch repair, Wheel alignment",
-        },
-    ]
-
-    for center_data in sample_centers:
-        ServiceCenter.objects.create(scan=scan, **center_data)
 
 
 # ============================================================
@@ -253,7 +241,7 @@ def _create_sample_service_centers(scan, service_keyword):
 def scan_history(request):
     """Get all scan history for the authenticated user."""
     scans = ScanHistory.objects.filter(user=request.user)
-    serializer = ScanHistorySerializer(scans, many=True)
+    serializer = ScanHistorySerializer(scans, many=True, context={"request": request})
     return Response({
         "success": True,
         "data": serializer.data,
@@ -272,7 +260,7 @@ def scan_detail(request, scan_id):
             "message": "Scan not found.",
         }, status=status.HTTP_404_NOT_FOUND)
 
-    serializer = ScanHistorySerializer(scan)
+    serializer = ScanHistorySerializer(scan, context={"request": request})
     return Response({
         "success": True,
         "data": serializer.data,
@@ -319,3 +307,86 @@ def service_centers(request, scan_id):
         "success": True,
         "data": serializer.data,
     })
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def place_detail(request, eloc):
+    """Fetch phone number and coordinates for a Mappls place by eLoc."""
+    detail = get_place_detail(eloc)
+    return Response({"success": True, "data": detail})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def reverse_geocode_view(request):
+    """
+    Reverse geocode lat/lng to a human-readable address using Mappls REST API.
+    Query params: lat, lng
+    """
+    lat = request.query_params.get("lat")
+    lng = request.query_params.get("lng")
+    if not lat or not lng:
+        return Response(
+            {"success": False, "message": "lat and lng query params are required."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    try:
+        result = reverse_geocode(float(lat), float(lng))
+        return Response({"success": True, "data": result})
+    except (ValueError, TypeError):
+        return Response(
+            {"success": False, "message": "Invalid lat/lng values."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def route_directions(request):
+    """
+    Get turn-by-turn route from user location to a service center.
+
+    Query params:
+      origin_lat, origin_lng  — user's current GPS coordinates
+      eloc                    — Mappls eLoc of destination (preferred)
+      dest_lat, dest_lng      — fallback destination coordinates
+
+    Returns steps[], overview_polyline, distance_text, duration_text.
+    """
+    origin_lat = request.query_params.get("origin_lat")
+    origin_lng = request.query_params.get("origin_lng")
+    eloc       = request.query_params.get("eloc", "").strip()
+    dest_lat   = request.query_params.get("dest_lat")
+    dest_lng   = request.query_params.get("dest_lng")
+
+    if not origin_lat or not origin_lng:
+        return Response(
+            {"success": False, "message": "origin_lat and origin_lng are required."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if not eloc and not (dest_lat and dest_lng):
+        return Response(
+            {"success": False, "message": "Provide eloc or dest_lat+dest_lng."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        result = get_route(
+            origin_lat=float(origin_lat),
+            origin_lng=float(origin_lng),
+            dest_eloc=eloc or None,
+            dest_lat=float(dest_lat) if dest_lat else None,
+            dest_lng=float(dest_lng) if dest_lng else None,
+        )
+        if not result:
+            return Response(
+                {"success": False, "message": "Could not calculate route."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return Response({"success": True, "data": result})
+    except (ValueError, TypeError) as e:
+        return Response(
+            {"success": False, "message": f"Invalid parameters: {e}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )

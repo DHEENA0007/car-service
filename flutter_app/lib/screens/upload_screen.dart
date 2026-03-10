@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import '../utils/theme.dart';
 import '../services/api_service.dart';
@@ -20,6 +21,7 @@ class _UploadScreenState extends State<UploadScreen>
   bool _isAnalyzing = false;
   late AnimationController _analyzeAnimController;
   String _analyzingText = 'Analyzing vehicle issue...';
+  String? _detectedArea; // Area name from Mappls reverse geocode
 
   @override
   void initState() {
@@ -53,6 +55,46 @@ class _UploadScreenState extends State<UploadScreen>
     }
   }
 
+  Future<Position?> _getUserLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Enable location services for real nearby service centers'),
+            duration: Duration(seconds: 3),
+          ));
+        }
+        return null;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return null;
+      }
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Location permission denied – grant it in settings for nearby results'),
+            duration: Duration(seconds: 3),
+          ));
+        }
+        return null;
+      }
+
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 15),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Location error: $e');
+      return null;
+    }
+  }
+
   Future<void> _analyzeImage() async {
     if (_selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -68,9 +110,31 @@ class _UploadScreenState extends State<UploadScreen>
 
     setState(() {
       _isAnalyzing = true;
-      _analyzingText = 'Uploading image...';
+      _analyzingText = 'Getting your location...';
     });
     _analyzeAnimController.repeat();
+
+    // Get user location for Mappls nearby search
+    final position = await _getUserLocation();
+
+    // Reverse geocode to show user's area name
+    if (position != null && mounted) {
+      final geo = await ApiService.reverseGeocode(position.latitude, position.longitude);
+      final locality = geo['locality'] as String? ?? '';
+      final city = geo['city'] as String? ?? '';
+      final area = [locality, city].where((s) => s.isNotEmpty).join(', ');
+      if (area.isNotEmpty && mounted) {
+        setState(() {
+          _detectedArea = area;
+          _analyzingText = 'Location: $area';
+        });
+        await Future.delayed(const Duration(milliseconds: 800));
+      }
+    }
+
+    if (mounted && _isAnalyzing) {
+      setState(() => _analyzingText = 'Uploading image...');
+    }
 
     // Simulate progress text changes
     Future.delayed(const Duration(seconds: 2), () {
@@ -93,6 +157,8 @@ class _UploadScreenState extends State<UploadScreen>
       final result = await ApiService.analyzeImage(
         imageFile: _selectedImage!,
         description: _descriptionCtrl.text.trim(),
+        latitude: position?.latitude,
+        longitude: position?.longitude,
       );
 
       if (!mounted) return;
@@ -401,6 +467,30 @@ class _UploadScreenState extends State<UploadScreen>
                 ),
               ),
             ).animate().fadeIn(delay: 400.ms),
+
+            const SizedBox(height: 16),
+
+            // Detected location chip (shown after user picks image)
+            if (_detectedArea != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppTheme.accentColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppTheme.accentColor.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.location_on, color: AppTheme.accentColor, size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      _detectedArea!,
+                      style: const TextStyle(color: AppTheme.accentColor, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ).animate().fadeIn(),
 
             const SizedBox(height: 32),
 

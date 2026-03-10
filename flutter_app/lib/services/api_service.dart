@@ -130,6 +130,8 @@ class ApiService {
   static Future<Map<String, dynamic>> analyzeImage({
     required File imageFile,
     String? description,
+    double? latitude,
+    double? longitude,
   }) async {
     final token = await getToken();
     final request = http.MultipartRequest(
@@ -142,6 +144,12 @@ class ApiService {
 
     if (description != null && description.isNotEmpty) {
       request.fields['description'] = description;
+    }
+    if (latitude != null) {
+      request.fields['latitude'] = latitude.toString();
+    }
+    if (longitude != null) {
+      request.fields['longitude'] = longitude.toString();
     }
 
     final streamedResponse = await request.send();
@@ -181,6 +189,70 @@ class ApiService {
     final response = await http.get(
       Uri.parse('${AppConstants.baseUrl}/scan/$scanId/service-centers/'),
       headers: _headers(),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> getPlaceDetail(String eloc) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${AppConstants.baseUrl}/place-detail/$eloc/'),
+        headers: _headers(),
+      );
+      return jsonDecode(response.body);
+    } catch (_) {
+      return {'success': false, 'data': {}};
+    }
+  }
+
+  /// Reverse geocode coordinates to a human-readable address using Mappls.
+  /// Returns map with formatted_address, locality, city, state, pincode.
+  static Future<Map<String, dynamic>> reverseGeocode(double lat, double lng) async {
+    try {
+      final uri = Uri.parse('${AppConstants.baseUrl}/reverse-geocode/')
+          .replace(queryParameters: {'lat': lat.toString(), 'lng': lng.toString()});
+      final response = await http.get(uri, headers: _headers());
+      final body = jsonDecode(response.body);
+      if (body['success'] == true) return body['data'] as Map<String, dynamic>;
+    } catch (_) {}
+    return {};
+  }
+
+  /// Get turn-by-turn route from user location to a service center via Mappls Route API.
+  /// [eloc] is preferred over [destLat]/[destLng] for accuracy.
+  /// Returns map with steps[], distance_text, duration_text, overview_polyline,
+  /// destination_lat, destination_lng — or {} on failure.
+  static Future<Map<String, dynamic>> getRoute({
+    required double originLat,
+    required double originLng,
+    String? eloc,
+    double? destLat,
+    double? destLng,
+  }) async {
+    try {
+      final params = <String, String>{
+        'origin_lat': originLat.toString(),
+        'origin_lng': originLng.toString(),
+        if (eloc != null && eloc.isNotEmpty) 'eloc': eloc,
+        if (destLat != null) 'dest_lat': destLat.toString(),
+        if (destLng != null) 'dest_lng': destLng.toString(),
+      };
+      final uri = Uri.parse('${AppConstants.baseUrl}/route/')
+          .replace(queryParameters: params);
+      final response = await http.get(uri, headers: _headers());
+      final body = jsonDecode(response.body);
+      if (body['success'] == true) return body['data'] as Map<String, dynamic>;
+    } catch (_) {}
+    return {};
+  }
+
+  // ============ Auth – Forgot Password ============
+
+  static Future<Map<String, dynamic>> forgotPassword(String email) async {
+    final response = await http.post(
+      Uri.parse('${AppConstants.baseUrl}/auth/forgot-password/'),
+      headers: _headers(withAuth: false),
+      body: jsonEncode({'email': email}),
     );
     return jsonDecode(response.body);
   }

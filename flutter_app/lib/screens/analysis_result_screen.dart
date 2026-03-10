@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../utils/theme.dart';
+import '../utils/constants.dart';
 import 'service_centers_screen.dart';
 
 class AnalysisResultScreen extends StatelessWidget {
@@ -29,6 +30,15 @@ class AnalysisResultScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Uploaded image preview
+              if (scanData['image'] != null)
+                _buildImagePreview(scanData['image'] as String)
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideY(begin: -0.1, end: 0),
+
+              if (scanData['image'] != null) const SizedBox(height: 16),
+
               // Success Header
               Container(
                 padding: const EdgeInsets.all(24),
@@ -261,6 +271,40 @@ class AnalysisResultScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildImagePreview(String imageUrl) {
+    // imageUrl is already an absolute URL from the backend (request context added)
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+      child: Image.network(
+        imageUrl,
+        height: 200,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Container(
+          height: 200,
+          decoration: BoxDecoration(
+            color: AppTheme.cardBg,
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+          ),
+          child: const Icon(Icons.broken_image_outlined,
+              size: 48, color: AppTheme.textMuted),
+        ),
+        loadingBuilder: (_, child, progress) {
+          if (progress == null) return child;
+          return Container(
+            height: 200,
+            decoration: BoxDecoration(
+              color: AppTheme.cardBg,
+              borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            ),
+            child: const Center(
+                child: CircularProgressIndicator(color: AppTheme.primaryColor)),
+          );
+        },
       ),
     );
   }

@@ -1,0 +1,6 @@
+Django==6.0.3
+djangorestframework==3.16.1
+django-cors-headers==4.9.0
+Pillow==12.1.1
+groq==1.0.0
+requests==2.32.5

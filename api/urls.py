@@ -6,6 +6,7 @@ urlpatterns = [
     path("auth/register/", views.register, name="register"),
     path("auth/login/", views.login, name="login"),
     path("auth/logout/", views.logout, name="logout"),
+    path("auth/forgot-password/", views.forgot_password, name="forgot_password"),
 
     # Profile
     path("auth/profile/", views.profile, name="profile"),
@@ -18,4 +19,13 @@ urlpatterns = [
 
     # Service Centers
     path("scan/<int:scan_id>/service-centers/", views.service_centers, name="service_centers"),
+
+    # Mappls Place Detail (phone + coordinates by eLoc)
+    path("place-detail/<str:eloc>/", views.place_detail, name="place_detail"),
+
+    # Mappls Reverse Geocoding (?lat=&lng=)
+    path("reverse-geocode/", views.reverse_geocode_view, name="reverse_geocode"),
+
+    # Mappls Route Directions (?origin_lat=&origin_lng=&eloc= or &dest_lat=&dest_lng=)
+    path("route/", views.route_directions, name="route_directions"),
 ]
