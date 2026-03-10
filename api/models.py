@@ -55,6 +55,56 @@ class ScanHistory(models.Model):
         return f"Scan by {self.user.username} - {self.detected_issue or 'Pending'}"
 
 
+class Vehicle(models.Model):
+    """A vehicle owned by the user."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="vehicles")
+    make = models.CharField(max_length=100)
+    model = models.CharField(max_length=100)
+    year = models.IntegerField()
+    color = models.CharField(max_length=50, blank=True, null=True)
+    license_plate = models.CharField(max_length=20, blank=True, null=True)
+    vin = models.CharField(max_length=50, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.year} {self.make} {self.model} ({self.user.username})"
+
+    @property
+    def total_service_records(self):
+        return self.service_records.count()
+
+    @property
+    def total_service_cost(self):
+        from django.db.models import Sum
+        result = self.service_records.aggregate(total=Sum("cost"))["total"]
+        return float(result) if result else 0.0
+
+
+class ServiceRecord(models.Model):
+    """A service/maintenance record for a vehicle."""
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name="service_records")
+    service_name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    cost = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    service_date = models.DateField()
+    mileage = models.IntegerField(blank=True, null=True)
+    service_center_name = models.CharField(max_length=255, blank=True, null=True)
+    bill_image = models.ImageField(upload_to="bills/", blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-service_date"]
+
+    def __str__(self):
+        return f"{self.service_name} – {self.vehicle}"
+
+
 class ServiceCenter(models.Model):
     """Stores recommended service centers for each scan."""
     scan = models.ForeignKey(ScanHistory, on_delete=models.CASCADE, related_name="service_centers")

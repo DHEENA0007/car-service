@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import User, ScanHistory, ServiceCenter
+from .models import User, ScanHistory, ServiceCenter, Vehicle, ServiceRecord
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -92,3 +92,33 @@ class ScanUploadSerializer(serializers.ModelSerializer):
     class Meta:
         model = ScanHistory
         fields = ["image", "description"]
+
+
+# ============================================================
+# Garage Serializers
+# ============================================================
+
+class ServiceRecordSerializer(serializers.ModelSerializer):
+    """Serializer for a single service record."""
+    class Meta:
+        model = ServiceRecord
+        fields = [
+            "id", "service_name", "description", "cost", "service_date",
+            "mileage", "service_center_name", "bill_image", "notes",
+            "created_at", "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class VehicleSerializer(serializers.ModelSerializer):
+    """Serializer for vehicle list/create."""
+    total_service_records = serializers.ReadOnlyField()
+    total_service_cost = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Vehicle
+        fields = [
+            "id", "make", "model", "year", "color", "license_plate", "vin",
+            "total_service_records", "total_service_cost", "created_at",
+        ]
+        read_only_fields = ["id", "created_at"]

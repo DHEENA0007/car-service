@@ -12,9 +12,9 @@ void main() {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: AppTheme.cardBg,
-      systemNavigationBarIconBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: AppTheme.lCardBg,
+      systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
   runApp(const MyApp());
@@ -28,7 +28,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'AutoDiagno - AI Car Service',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.light, // Set to light as requested
       home: const SplashScreen(),
     );
   }

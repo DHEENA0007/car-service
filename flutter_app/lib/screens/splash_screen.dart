@@ -57,7 +57,7 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
+        decoration: const BoxDecoration(gradient: AppTheme.lightGradient),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -108,7 +108,7 @@ class _SplashScreenState extends State<SplashScreen>
                       letterSpacing: 2,
                       foreground: Paint()
                         ..shader = const LinearGradient(
-                          colors: [AppTheme.primaryColor, AppTheme.accentColor],
+                          colors: [AppTheme.lPrimary, AppTheme.lAccent],
                         ).createShader(
                           const Rect.fromLTWH(0, 0, 250, 70),
                         ),

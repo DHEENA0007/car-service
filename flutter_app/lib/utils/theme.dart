@@ -2,48 +2,72 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Primary Colors
-  static const Color primaryColor = Color(0xFF1A73E8);
-  static const Color primaryDark = Color(0xFF0D47A1);
-  static const Color primaryLight = Color(0xFF64B5F6);
+  // Common Colors
+  static const Color success = Color(0xFF10B981);
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color error = Color(0xFFEF4444);
+  static const Color info = Color(0xFF3B82F6);
+  static const Color critical = Color(0xFF991B1B);
 
-  // Accent Colors
-  static const Color accentColor = Color(0xFF00BFA5);
-  static const Color accentLight = Color(0xFF64FFDA);
+  // Light Theme Palette
+  static const Color lPrimary = Color(0xFF0061FF);
+  static const Color lPrimaryDark = Color(0xFF004ECF);
+  static const Color lPrimaryLight = Color(0xFFE0E7FF);
+  static const Color lAccent = Color(0xFF00D2FF);
+  static const Color lScaffoldBg = Color(0xFFF8FAFC);
+  static const Color lCardBg = Colors.white;
+  static const Color lSurfaceBg = Color(0xFFF1F5F9);
+  static const Color lInputBg = Color(0xFFF1F5F9);
+  static const Color lTextPrimary = Color(0xFF0F172A);
+  static const Color lTextSecondary = Color(0xFF475569);
+  static const Color lTextMuted = Color(0xFF94A3B8);
 
-  // Background Colors
-  static const Color scaffoldBg = Color(0xFF0F1923);
-  static const Color cardBg = Color(0xFF1A2733);
-  static const Color surfaceBg = Color(0xFF243447);
-  static const Color inputBg = Color(0xFF1E2D3D);
+  // Dark Theme Palette
+  static const Color dPrimary = Color(0xFF1A73E8);
+  static const Color dScaffoldBg = Color(0xFF0F172A);
+  static const Color dCardBg = Color(0xFF1E293B);
+  static const Color dSurfaceBg = Color(0xFF334155);
+  static const Color dInputBg = Color(0xFF0F172A);
+  static const Color dTextPrimary = Color(0xFFF8FAFC);
+  static const Color dTextSecondary = Color(0xFFCBD5E1);
+  static const Color dTextMuted = Color(0xFF64748B);
 
-  // Text Colors
-  static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFFB0BEC5);
-  static const Color textMuted = Color(0xFF78909C);
+  // Static Fields (Defaulting to Light Mode for compatibility with const constructors)
+  static const Color primaryColor = lPrimary;
+  static const Color primaryDark = lPrimaryDark;
+  static const Color primaryLight = lPrimaryLight;
+  static const Color accentColor = lAccent;
+  
+  static const Color scaffoldBg = lScaffoldBg;
+  static const Color cardBg = lCardBg;
+  static const Color surfaceBg = lSurfaceBg;
+  static const Color inputBg = lInputBg;
 
-  // Status Colors
-  static const Color success = Color(0xFF4CAF50);
-  static const Color warning = Color(0xFFFF9800);
-  static const Color error = Color(0xFFEF5350);
-  static const Color critical = Color(0xFFD32F2F);
-  static const Color info = Color(0xFF29B6F6);
+  static const Color textPrimary = lTextPrimary;
+  static const Color textSecondary = lTextSecondary;
+  static const Color textMuted = lTextMuted;
 
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFF1A73E8), Color(0xFF00BFA5)],
+    colors: [Color(0xFF0061FF), Color(0xFF00D2FF)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
+  static const LinearGradient lightGradient = LinearGradient(
+    colors: [Color(0xFFF8FAFC), Color(0xFFF1F5F9)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
   static const LinearGradient darkGradient = LinearGradient(
-    colors: [Color(0xFF0F1923), Color(0xFF1A2733)],
+    colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
 
   static const LinearGradient cardGradient = LinearGradient(
-    colors: [Color(0xFF1A2733), Color(0xFF243447)],
+    colors: [Colors.white, Color(0xFFF1F5F9)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -58,73 +82,76 @@ class AppTheme {
   // Shadows
   static List<BoxShadow> get cardShadow => [
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.3),
-          blurRadius: 12,
-          offset: const Offset(0, 4),
+          color: Colors.black.withValues(alpha: 0.04),
+          blurRadius: 20,
+          offset: const Offset(0, 10),
         ),
       ];
 
   static List<BoxShadow> get glowShadow => [
         BoxShadow(
-          color: primaryColor.withValues(alpha: 0.3),
-          blurRadius: 20,
-          offset: const Offset(0, 4),
+          color: lPrimary.withValues(alpha: 0.2),
+          blurRadius: 30,
+          offset: const Offset(0, 10),
         ),
       ];
 
-  // Theme Data
-  static ThemeData get darkTheme {
+  // Theme Data - LIGHT
+  static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: scaffoldBg,
-      primaryColor: primaryColor,
-      colorScheme: const ColorScheme.dark(
-        primary: primaryColor,
-        secondary: accentColor,
-        surface: cardBg,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: lScaffoldBg,
+      primaryColor: lPrimary,
+      colorScheme: ColorScheme.light(
+        primary: lPrimary,
+        secondary: lAccent,
+        surface: lCardBg,
+        onSurface: lTextPrimary,
         error: error,
       ),
-      textTheme: GoogleFonts.interTextTheme(
+      textTheme: GoogleFonts.outfitTextTheme(
         const TextTheme(
-          displayLarge: TextStyle(color: textPrimary, fontWeight: FontWeight.bold),
-          displayMedium: TextStyle(color: textPrimary, fontWeight: FontWeight.bold),
-          headlineLarge: TextStyle(color: textPrimary, fontWeight: FontWeight.w700),
-          headlineMedium: TextStyle(color: textPrimary, fontWeight: FontWeight.w600),
-          titleLarge: TextStyle(color: textPrimary, fontWeight: FontWeight.w600),
-          titleMedium: TextStyle(color: textPrimary, fontWeight: FontWeight.w500),
-          bodyLarge: TextStyle(color: textSecondary),
-          bodyMedium: TextStyle(color: textSecondary),
-          labelLarge: TextStyle(color: textPrimary, fontWeight: FontWeight.w600),
+          displayLarge: TextStyle(color: lTextPrimary, fontWeight: FontWeight.bold),
+          displayMedium: TextStyle(color: lTextPrimary, fontWeight: FontWeight.bold),
+          headlineLarge: TextStyle(color: lTextPrimary, fontWeight: FontWeight.w700),
+          headlineMedium: TextStyle(color: lTextPrimary, fontWeight: FontWeight.w600),
+          titleLarge: TextStyle(color: lTextPrimary, fontWeight: FontWeight.w600),
+          titleMedium: TextStyle(color: lTextPrimary, fontWeight: FontWeight.w500),
+          bodyLarge: TextStyle(color: lTextSecondary),
+          bodyMedium: TextStyle(color: lTextSecondary),
+          labelLarge: TextStyle(color: lTextPrimary, fontWeight: FontWeight.w600),
         ),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: scaffoldBg,
+        backgroundColor: lScaffoldBg,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.inter(
+        titleTextStyle: GoogleFonts.outfit(
           fontSize: 20,
           fontWeight: FontWeight.w600,
-          color: textPrimary,
+          color: lTextPrimary,
         ),
-        iconTheme: const IconThemeData(color: textPrimary),
+        iconTheme: const IconThemeData(color: lTextPrimary),
       ),
       cardTheme: CardThemeData(
-        color: cardBg,
+        color: lCardBg,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusMd),
+          side: BorderSide(color: lSurfaceBg.withValues(alpha: 0.5)),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
+          backgroundColor: lPrimary,
           foregroundColor: Colors.white,
+          elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusMd),
           ),
-          textStyle: GoogleFonts.inter(
+          textStyle: GoogleFonts.outfit(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -132,20 +159,100 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: inputBg,
+        fillColor: lInputBg,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMd),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMd),
-          borderSide: BorderSide(color: surfaceBg.withValues(alpha: 0.5)),
+          borderSide: BorderSide(color: lSurfaceBg),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMd),
-          borderSide: const BorderSide(color: primaryColor, width: 2),
+          borderSide: const BorderSide(color: lPrimary, width: 2),
         ),
-        hintStyle: const TextStyle(color: textMuted),
+        hintStyle: const TextStyle(color: lTextMuted),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      ),
+    );
+  }
+
+  // Theme Data - DARK
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: dScaffoldBg,
+      primaryColor: dPrimary,
+      colorScheme: ColorScheme.dark(
+        primary: dPrimary,
+        secondary: lAccent,
+        surface: dCardBg,
+        onSurface: dTextPrimary,
+        error: error,
+      ),
+      textTheme: GoogleFonts.outfitTextTheme(
+        const TextTheme(
+          displayLarge: TextStyle(color: dTextPrimary, fontWeight: FontWeight.bold),
+          displayMedium: TextStyle(color: dTextPrimary, fontWeight: FontWeight.bold),
+          headlineLarge: TextStyle(color: dTextPrimary, fontWeight: FontWeight.w700),
+          headlineMedium: TextStyle(color: dTextPrimary, fontWeight: FontWeight.w600),
+          titleLarge: TextStyle(color: dTextPrimary, fontWeight: FontWeight.w600),
+          titleMedium: TextStyle(color: dTextPrimary, fontWeight: FontWeight.w500),
+          bodyLarge: TextStyle(color: dTextSecondary),
+          bodyMedium: TextStyle(color: dTextSecondary),
+          labelLarge: TextStyle(color: dTextPrimary, fontWeight: FontWeight.w600),
+        ),
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: dScaffoldBg,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.outfit(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: dTextPrimary,
+        ),
+        iconTheme: const IconThemeData(color: dTextPrimary),
+      ),
+      cardTheme: CardThemeData(
+        color: dCardBg,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: dPrimary,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusMd),
+          ),
+          textStyle: GoogleFonts.outfit(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: dInputBg,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+          borderSide: BorderSide(color: dSurfaceBg.withValues(alpha: 0.5)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+          borderSide: const BorderSide(color: dPrimary, width: 2),
+        ),
+        hintStyle: const TextStyle(color: dTextMuted),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
@@ -197,3 +304,4 @@ class AppTheme {
     }
   }
 }
+

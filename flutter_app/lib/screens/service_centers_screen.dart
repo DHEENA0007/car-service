@@ -24,7 +24,7 @@ class ServiceCentersScreen extends StatelessWidget {
         ),
       ),
       body: Container(
-        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
+        decoration: const BoxDecoration(gradient: AppTheme.lightGradient),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -143,9 +143,9 @@ class ServiceCentersScreen extends StatelessWidget {
           border: Border.all(color: AppTheme.surfaceBg),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
             ),
           ],
         ),

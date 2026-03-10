@@ -267,4 +267,103 @@ class ApiService {
     }
     return null;
   }
+
+  // ============ Garage – Vehicles ============
+
+  static Future<Map<String, dynamic>> getVehicles() async {
+    final response = await http.get(
+      Uri.parse('${AppConstants.baseUrl}/garage/vehicles/'),
+      headers: _headers(),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> addVehicle(Map<String, dynamic> data) async {
+    final response = await http.post(
+      Uri.parse('${AppConstants.baseUrl}/garage/vehicles/'),
+      headers: _headers(),
+      body: jsonEncode(data),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> updateVehicle(int vehicleId, Map<String, dynamic> data) async {
+    final response = await http.put(
+      Uri.parse('${AppConstants.baseUrl}/garage/vehicles/$vehicleId/'),
+      headers: _headers(),
+      body: jsonEncode(data),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> deleteVehicle(int vehicleId) async {
+    final response = await http.delete(
+      Uri.parse('${AppConstants.baseUrl}/garage/vehicles/$vehicleId/'),
+      headers: _headers(),
+    );
+    return jsonDecode(response.body);
+  }
+
+  // ============ Garage – Service Records ============
+
+  static Future<Map<String, dynamic>> getServiceRecords(int vehicleId) async {
+    final response = await http.get(
+      Uri.parse('${AppConstants.baseUrl}/garage/vehicles/$vehicleId/records/'),
+      headers: _headers(),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> addServiceRecord({
+    required int vehicleId,
+    required Map<String, dynamic> data,
+    File? billImage,
+  }) async {
+    final token = await getToken();
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('${AppConstants.baseUrl}/garage/vehicles/$vehicleId/records/'),
+    );
+    request.headers['Authorization'] = 'Token $token';
+    data.forEach((key, value) {
+      if (value != null) request.fields[key] = value.toString();
+    });
+    if (billImage != null) {
+      request.files.add(await http.MultipartFile.fromPath('bill_image', billImage.path));
+    }
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> updateServiceRecord({
+    required int vehicleId,
+    required int recordId,
+    required Map<String, dynamic> data,
+    File? billImage,
+  }) async {
+    final token = await getToken();
+    final request = http.MultipartRequest(
+      'PUT',
+      Uri.parse('${AppConstants.baseUrl}/garage/vehicles/$vehicleId/records/$recordId/'),
+    );
+    request.headers['Authorization'] = 'Token $token';
+    data.forEach((key, value) {
+      if (value != null) request.fields[key] = value.toString();
+    });
+    if (billImage != null) {
+      request.files.add(await http.MultipartFile.fromPath('bill_image', billImage.path));
+    }
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> deleteServiceRecord(int vehicleId, int recordId) async {
+    final response = await http.delete(
+      Uri.parse('${AppConstants.baseUrl}/garage/vehicles/$vehicleId/records/$recordId/'),
+      headers: _headers(),
+    );
+    return jsonDecode(response.body);
+  }
 }

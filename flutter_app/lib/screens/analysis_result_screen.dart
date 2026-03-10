@@ -24,7 +24,7 @@ class AnalysisResultScreen extends StatelessWidget {
         ),
       ),
       body: Container(
-        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
+        decoration: const BoxDecoration(gradient: AppTheme.lightGradient),
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(

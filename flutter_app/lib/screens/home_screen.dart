@@ -6,6 +6,7 @@ import '../services/api_service.dart';
 import 'upload_screen.dart';
 import 'scan_history_screen.dart';
 import 'profile_screen.dart';
+import 'garage_screen.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -54,20 +55,23 @@ class _HomeScreenState extends State<HomeScreen> {
     final screens = [
       _buildDashboard(),
       const ScanHistoryScreen(),
+      const GarageScreen(),
       const ProfileScreen(),
     ];
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
-        child: screens[_selectedIndex],
+        decoration: const BoxDecoration(
+          gradient: AppTheme.lightGradient, // Switched to light gradient
+        ),
+        child: screens[_selectedIndex].animate().fadeIn(duration: 400.ms),
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: AppTheme.cardBg,
+          color: Theme.of(context).colorScheme.surface,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),
@@ -80,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
             if (index == 0) _loadData();
           },
           backgroundColor: Colors.transparent,
-          indicatorColor: AppTheme.primaryColor.withValues(alpha: 0.2),
+          indicatorColor: AppTheme.primaryColor.withValues(alpha: 0.1),
           destinations: const [
             NavigationDestination(
               icon: Icon(Icons.dashboard_outlined, color: AppTheme.textMuted),
@@ -91,6 +95,11 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icon(Icons.history_outlined, color: AppTheme.textMuted),
               selectedIcon: Icon(Icons.history, color: AppTheme.primaryColor),
               label: 'History',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.garage_outlined, color: AppTheme.textMuted),
+              selectedIcon: Icon(Icons.garage, color: AppTheme.primaryColor),
+              label: 'Garage',
             ),
             NavigationDestination(
               icon: Icon(Icons.person_outline, color: AppTheme.textMuted),
@@ -451,9 +460,9 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: _buildActionCard(
-                Icons.person,
-                'My Profile',
-                'View details',
+                Icons.garage,
+                'My Garage',
+                'Vehicles',
                 AppTheme.accentColor,
                 () => setState(() => _selectedIndex = 2),
               ),

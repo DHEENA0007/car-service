@@ -10,7 +10,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.conf import settings
 
-from .models import User, ScanHistory, ServiceCenter
+from .models import User, ScanHistory, ServiceCenter, Vehicle, ServiceRecord
 from .serializers import (
     UserRegistrationSerializer,
     UserLoginSerializer,
@@ -18,6 +18,8 @@ from .serializers import (
     ScanHistorySerializer,
     ScanUploadSerializer,
     ServiceCenterSerializer,
+    VehicleSerializer,
+    ServiceRecordSerializer,
 )
 from .ai_service import analyze_vehicle_image, get_service_search_keyword
 from .mappls_service import search_nearby_service_centers, get_place_detail, reverse_geocode, get_route
@@ -185,6 +187,14 @@ def analyze_image(request):
 
     logger.info(f"Analyzing image: {image_path}")
     ai_result = analyze_vehicle_image(image_path, user_description)
+
+    # Reject if no vehicle was detected in the image
+    if ai_result.get("no_vehicle_detected") is True:
+        scan.delete()
+        return Response({
+            "success": False,
+            "message": "No vehicle detected in the image. Please upload a clear photo of your vehicle.",
+        }, status=status.HTTP_400_BAD_REQUEST)
 
     # Update scan with AI results
     scan.detected_issue = ai_result.get("detected_issue", "Unknown Issue")
@@ -390,3 +400,97 @@ def route_directions(request):
             {"success": False, "message": f"Invalid parameters: {e}"},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+
+# ============================================================
+# Garage – Vehicle Views
+# ============================================================
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def vehicle_list(request):
+    """List all vehicles or add a new vehicle for the authenticated user."""
+    if request.method == "GET":
+        vehicles = Vehicle.objects.filter(user=request.user)
+        serializer = VehicleSerializer(vehicles, many=True)
+        return Response({"success": True, "data": serializer.data})
+
+    serializer = VehicleSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save(user=request.user)
+        return Response({"success": True, "data": serializer.data}, status=status.HTTP_201_CREATED)
+    return Response({"success": False, "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["GET", "PUT", "DELETE"])
+@permission_classes([IsAuthenticated])
+def vehicle_detail(request, vehicle_id):
+    """Retrieve, update, or delete a vehicle."""
+    try:
+        vehicle = Vehicle.objects.get(id=vehicle_id, user=request.user)
+    except Vehicle.DoesNotExist:
+        return Response({"success": False, "message": "Vehicle not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == "GET":
+        serializer = VehicleSerializer(vehicle)
+        return Response({"success": True, "data": serializer.data})
+
+    if request.method == "PUT":
+        serializer = VehicleSerializer(vehicle, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"success": True, "data": serializer.data})
+        return Response({"success": False, "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    vehicle.delete()
+    return Response({"success": True, "message": "Vehicle deleted."})
+
+
+# ============================================================
+# Garage – Service Record Views
+# ============================================================
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def service_record_list(request, vehicle_id):
+    """List all service records or add one for a vehicle."""
+    try:
+        vehicle = Vehicle.objects.get(id=vehicle_id, user=request.user)
+    except Vehicle.DoesNotExist:
+        return Response({"success": False, "message": "Vehicle not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == "GET":
+        records = ServiceRecord.objects.filter(vehicle=vehicle)
+        serializer = ServiceRecordSerializer(records, many=True, context={"request": request})
+        return Response({"success": True, "data": serializer.data})
+
+    serializer = ServiceRecordSerializer(data=request.data, context={"request": request})
+    if serializer.is_valid():
+        serializer.save(vehicle=vehicle)
+        return Response({"success": True, "data": serializer.data}, status=status.HTTP_201_CREATED)
+    return Response({"success": False, "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["GET", "PUT", "DELETE"])
+@permission_classes([IsAuthenticated])
+def service_record_detail(request, vehicle_id, record_id):
+    """Retrieve, update, or delete a service record."""
+    try:
+        vehicle = Vehicle.objects.get(id=vehicle_id, user=request.user)
+        record = ServiceRecord.objects.get(id=record_id, vehicle=vehicle)
+    except (Vehicle.DoesNotExist, ServiceRecord.DoesNotExist):
+        return Response({"success": False, "message": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == "GET":
+        serializer = ServiceRecordSerializer(record, context={"request": request})
+        return Response({"success": True, "data": serializer.data})
+
+    if request.method == "PUT":
+        serializer = ServiceRecordSerializer(record, data=request.data, partial=True, context={"request": request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"success": True, "data": serializer.data})
+        return Response({"success": False, "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    record.delete()
+    return Response({"success": True, "message": "Service record deleted."})

@@ -212,7 +212,7 @@ class _UploadScreenState extends State<UploadScreen>
 
   Widget _buildAnalyzingView() {
     return Container(
-      decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
+      decoration: const BoxDecoration(gradient: AppTheme.lightGradient),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -301,7 +301,7 @@ class _UploadScreenState extends State<UploadScreen>
 
   Widget _buildUploadView() {
     return Container(
-      decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
+      decoration: const BoxDecoration(gradient: AppTheme.lightGradient),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -596,7 +596,7 @@ class _UploadScreenState extends State<UploadScreen>
   void _showImageSourceDialog() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.cardBg,
+      backgroundColor: AppTheme.lScaffoldBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),

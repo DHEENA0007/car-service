@@ -47,11 +47,25 @@ def analyze_vehicle_image(image_path, user_description=""):
             mime_type = "image/jpeg"
 
         # Build prompt
-        prompt = """You are an expert automotive mechanic and vehicle diagnostics specialist. 
-Analyze this vehicle image carefully and provide a detailed diagnosis.
+        prompt = """You are an expert automotive mechanic and vehicle diagnostics specialist.
 
-You MUST respond ONLY with a valid JSON object in exactly this format (no extra text, no markdown):
+FIRST, check if this image contains a vehicle (car, truck, motorcycle, bus, van, etc.).
+
+If NO vehicle is detected, respond ONLY with this exact JSON:
 {
+    "no_vehicle_detected": true,
+    "detected_issue": "No Vehicle Detected",
+    "confidence_score": 0,
+    "problem_explanation": "The uploaded image does not appear to contain a vehicle. Please upload a clear photo of your vehicle showing the issue.",
+    "possible_causes": "",
+    "urgency_level": "low",
+    "recommended_service_type": "",
+    "additional_notes": ""
+}
+
+If a vehicle IS detected, analyze the issue and respond ONLY with this exact JSON (no extra text, no markdown):
+{
+    "no_vehicle_detected": false,
     "detected_issue": "Brief name of the detected problem",
     "confidence_score": 85,
     "problem_explanation": "Detailed explanation of what the problem is and why it happens",
@@ -65,9 +79,7 @@ Rules for urgency_level:
 - "low": Minor cosmetic or non-urgent issue
 - "medium": Should be addressed soon but not dangerous
 - "high": Needs prompt attention, could worsen
-- "critical": Dangerous, needs immediate professional attention
-
-Analyze the vehicle issue shown in this image thoroughly."""
+- "critical": Dangerous, needs immediate professional attention"""
 
         if user_description:
             prompt += f"\n\nThe user also describes the problem as: \"{user_description}\""
@@ -149,6 +161,15 @@ def _parse_ai_response(response_text):
 
 def _validate_result(result):
     """Validate and ensure all required fields exist."""
+    # If no vehicle detected, return as-is without filling defaults
+    if result.get("no_vehicle_detected") is True:
+        result.setdefault("detected_issue", "No Vehicle Detected")
+        result.setdefault("confidence_score", 0)
+        result.setdefault("urgency_level", "low")
+        return result
+
+    result.setdefault("no_vehicle_detected", False)
+
     defaults = {
         "detected_issue": "Unknown Issue",
         "confidence_score": 50,

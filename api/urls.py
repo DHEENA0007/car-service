@@ -28,4 +28,12 @@ urlpatterns = [
 
     # Mappls Route Directions (?origin_lat=&origin_lng=&eloc= or &dest_lat=&dest_lng=)
     path("route/", views.route_directions, name="route_directions"),
+
+    # Garage – Vehicles
+    path("garage/vehicles/", views.vehicle_list, name="vehicle_list"),
+    path("garage/vehicles/<int:vehicle_id>/", views.vehicle_detail, name="vehicle_detail"),
+
+    # Garage – Service Records
+    path("garage/vehicles/<int:vehicle_id>/records/", views.service_record_list, name="service_record_list"),
+    path("garage/vehicles/<int:vehicle_id>/records/<int:record_id>/", views.service_record_detail, name="service_record_detail"),
 ]

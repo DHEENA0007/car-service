@@ -99,7 +99,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
+        decoration: const BoxDecoration(gradient: AppTheme.lightGradient),
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
@@ -116,7 +116,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       icon: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppTheme.cardBg,
+                          color: AppTheme.lSurfaceBg,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(Icons.arrow_back, color: AppTheme.textPrimary),

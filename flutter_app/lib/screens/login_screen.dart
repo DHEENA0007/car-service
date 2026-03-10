@@ -70,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
+        decoration: const BoxDecoration(gradient: AppTheme.lightGradient),
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
@@ -137,7 +137,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       hintText: 'Enter your email or username',
                       prefixIcon: const Icon(Icons.person_outline, color: AppTheme.textMuted),
                       filled: true,
-                      fillColor: AppTheme.inputBg,
+                      fillColor: AppTheme.lSurfaceBg,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                         borderSide: BorderSide.none,
@@ -168,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             setState(() => _obscurePassword = !_obscurePassword),
                       ),
                       filled: true,
-                      fillColor: AppTheme.inputBg,
+                      fillColor: AppTheme.lSurfaceBg,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                         borderSide: BorderSide.none,
