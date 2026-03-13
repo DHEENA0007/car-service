@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'utils/theme.dart';
@@ -5,6 +6,18 @@ import 'screens/splash_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Suppress the known Flutter Web keyboard modifier assertion bug
+  if (kIsWeb) {
+    FlutterError.onError = (FlutterErrorDetails details) {
+      final msg = details.exceptionAsString();
+      if (msg.contains('keysPressed') ||
+          msg.contains('Attempted to send a key down event when no keys are in keysPressed')) {
+        return; // silently ignore
+      }
+      FlutterError.presentError(details);
+    };
+  }
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,

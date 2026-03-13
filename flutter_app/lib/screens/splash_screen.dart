@@ -5,6 +5,8 @@ import '../utils/constants.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
+import 'agent/agent_home_screen.dart';
+import 'admin/admin_home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -40,11 +42,22 @@ class _SplashScreenState extends State<SplashScreen>
     final isLoggedIn = await ApiService.isLoggedIn();
     if (!mounted) return;
 
+    Widget destination = const LoginScreen();
+    if (isLoggedIn) {
+      final role = await ApiService.getCachedUserRole();
+      if (role == 'admin') {
+        destination = const AdminHomeScreen();
+      } else if (role == 'agent') {
+        destination = const AgentHomeScreen();
+      } else {
+        destination = const HomeScreen();
+      }
+    }
+
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) =>
-            isLoggedIn ? const HomeScreen() : const LoginScreen(),
+        pageBuilder: (_, __, ___) => destination,
         transitionsBuilder: (_, animation, __, child) {
           return FadeTransition(opacity: animation, child: child);
         },

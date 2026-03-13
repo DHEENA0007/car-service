@@ -20,13 +20,13 @@ urlpatterns = [
     # Service Centers
     path("scan/<int:scan_id>/service-centers/", views.service_centers, name="service_centers"),
 
-    # Mappls Place Detail (phone + coordinates by eLoc)
+    # Mappls Place Detail
     path("place-detail/<str:eloc>/", views.place_detail, name="place_detail"),
 
     # Mappls Reverse Geocoding (?lat=&lng=)
     path("reverse-geocode/", views.reverse_geocode_view, name="reverse_geocode"),
 
-    # Mappls Route Directions (?origin_lat=&origin_lng=&eloc= or &dest_lat=&dest_lng=)
+    # Mappls Route Directions
     path("route/", views.route_directions, name="route_directions"),
 
     # Garage – Vehicles
@@ -36,4 +36,29 @@ urlpatterns = [
     # Garage – Service Records
     path("garage/vehicles/<int:vehicle_id>/records/", views.service_record_list, name="service_record_list"),
     path("garage/vehicles/<int:vehicle_id>/records/<int:record_id>/", views.service_record_detail, name="service_record_detail"),
+
+    # Bookings (User creates, Agent picks up)
+    path("bookings/", views.booking_list, name="booking_list"),
+    path("bookings/available/", views.booking_available, name="booking_available"),
+    path("bookings/<int:booking_id>/", views.booking_detail, name="booking_detail"),
+    path("bookings/<int:booking_id>/accept/", views.booking_accept, name="booking_accept"),
+    path("bookings/<int:booking_id>/status/", views.booking_update_status, name="booking_update_status"),
+
+    # Charge Sheets
+    path("charge-sheets/", views.charge_sheet_create, name="charge_sheet_create"),
+    path("charge-sheets/<int:booking_id>/", views.charge_sheet_detail, name="charge_sheet_detail"),
+
+    # Payments (Razorpay)
+    path("payments/create-order/", views.payment_create_order, name="payment_create_order"),
+    path("payments/verify/", views.payment_verify, name="payment_verify"),
+
+    # Admin
+    path("admin/stats/", views.admin_stats, name="admin_stats"),
+    path("admin/users/", views.admin_users, name="admin_users"),
+    path("admin/users/<int:user_id>/role/", views.admin_user_role, name="admin_user_role"),
+    path("admin/agents/", views.admin_agents, name="admin_agents"),
+    path("admin/agents/create/", views.admin_create_agent, name="admin_create_agent"),
+    path("admin/agents/<int:agent_id>/approve/", views.admin_agent_approve, name="admin_agent_approve"),
+    path("admin/scans/", views.admin_scans, name="admin_scans"),
+    path("admin/bookings/", views.admin_bookings, name="admin_bookings"),
 ]

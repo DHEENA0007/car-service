@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:geolocator/geolocator.dart';
@@ -16,7 +17,8 @@ class UploadScreen extends StatefulWidget {
 
 class _UploadScreenState extends State<UploadScreen>
     with TickerProviderStateMixin {
-  File? _selectedImage;
+  XFile? _selectedImage;
+  Uint8List? _webImageBytes; // used on web for preview
   final _descriptionCtrl = TextEditingController();
   bool _isAnalyzing = false;
   late AnimationController _analyzeAnimController;
@@ -49,9 +51,18 @@ class _UploadScreenState extends State<UploadScreen>
     );
 
     if (pickedFile != null) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-      });
+      if (kIsWeb) {
+        final bytes = await pickedFile.readAsBytes();
+        setState(() {
+          _selectedImage = pickedFile;
+          _webImageBytes = bytes;
+        });
+      } else {
+        setState(() {
+          _selectedImage = pickedFile;
+          _webImageBytes = null;
+        });
+      }
     }
   }
 
@@ -156,6 +167,7 @@ class _UploadScreenState extends State<UploadScreen>
     try {
       final result = await ApiService.analyzeImage(
         imageFile: _selectedImage!,
+        imageBytes: _webImageBytes,
         description: _descriptionCtrl.text.trim(),
         latitude: position?.latitude,
         longitude: position?.longitude,
@@ -329,13 +341,17 @@ class _UploadScreenState extends State<UploadScreen>
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            Image.file(_selectedImage!, fit: BoxFit.cover),
+                            kIsWeb && _webImageBytes != null
+                                ? Image.memory(_webImageBytes!, fit: BoxFit.cover)
+                                : Image.file(File(_selectedImage!.path), fit: BoxFit.cover),
                             Positioned(
                               top: 12,
                               right: 12,
                               child: GestureDetector(
-                                onTap: () =>
-                                    setState(() => _selectedImage = null),
+                                onTap: () => setState(() {
+                                  _selectedImage = null;
+                                  _webImageBytes = null;
+                                }),
                                 child: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(

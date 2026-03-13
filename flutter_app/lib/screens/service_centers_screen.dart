@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../utils/theme.dart';
 import 'service_center_detail_screen.dart';
+import 'map_navigation_screen.dart';
+import 'booking/booking_form_screen.dart';
 
 class ServiceCentersScreen extends StatelessWidget {
   final Map<String, dynamic> scanData;
@@ -278,44 +280,75 @@ class ServiceCentersScreen extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            // Distance + View Details
+            // Distance row
             Row(
               children: [
                 const Icon(Icons.directions_car,
                     color: AppTheme.accentColor, size: 16),
                 const SizedBox(width: 6),
+                Text(
+                  center['distance'] ?? 'N/A',
+                  style: const TextStyle(
+                    color: AppTheme.accentColor,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Action buttons: Navigate | Book | Details
+            Row(
+              children: [
+                // Navigate button
                 Expanded(
-                  child: Text(
-                    center['distance'] ?? 'N/A',
-                    style: const TextStyle(
-                      color: AppTheme.accentColor,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => MapNavigationScreen(centerData: center),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.navigation, size: 16),
+                    label: const Text('Navigate'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.primaryColor,
+                      side: const BorderSide(color: AppTheme.primaryColor),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                     ),
                   ),
                 ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'View Details',
-                        style: TextStyle(
-                          color: AppTheme.primaryColor,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
+                const SizedBox(width: 8),
+                // Book button
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BookingFormScreen(
+                            scanData: scanData,
+                            centerData: center,
+                          ),
                         ),
+                      );
+                    },
+                    icon: const Icon(Icons.build_circle, size: 16, color: Colors.white),
+                    label: const Text('Book', style: TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.success,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      SizedBox(width: 4),
-                      Icon(Icons.arrow_forward_ios,
-                          color: AppTheme.primaryColor, size: 12),
-                    ],
+                    ),
                   ),
                 ),
               ],

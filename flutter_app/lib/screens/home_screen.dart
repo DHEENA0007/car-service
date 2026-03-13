@@ -7,6 +7,7 @@ import 'upload_screen.dart';
 import 'scan_history_screen.dart';
 import 'profile_screen.dart';
 import 'garage_screen.dart';
+import 'booking/user_bookings_screen.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -56,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _buildDashboard(),
       const ScanHistoryScreen(),
       const GarageScreen(),
+      const UserBookingsScreen(),
       const ProfileScreen(),
     ];
 
@@ -100,6 +102,11 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icon(Icons.garage_outlined, color: AppTheme.textMuted),
               selectedIcon: Icon(Icons.garage, color: AppTheme.primaryColor),
               label: 'Garage',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.book_outlined, color: AppTheme.textMuted),
+              selectedIcon: Icon(Icons.book, color: AppTheme.primaryColor),
+              label: 'Bookings',
             ),
             NavigationDestination(
               icon: Icon(Icons.person_outline, color: AppTheme.textMuted),

@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/constants.dart';
 
@@ -128,7 +131,8 @@ class ApiService {
   // ============ Scan / AI Analysis ============
 
   static Future<Map<String, dynamic>> analyzeImage({
-    required File imageFile,
+    required XFile imageFile,
+    Uint8List? imageBytes,
     String? description,
     double? latitude,
     double? longitude,
@@ -140,7 +144,16 @@ class ApiService {
     );
 
     request.headers['Authorization'] = 'Token $token';
-    request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
+    if (kIsWeb && imageBytes != null) {
+      final filename = imageFile.name.isNotEmpty ? imageFile.name : 'image.jpg';
+      request.files.add(http.MultipartFile.fromBytes(
+        'image',
+        imageBytes,
+        filename: filename,
+      ));
+    } else {
+      request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
+    }
 
     if (description != null && description.isNotEmpty) {
       request.fields['description'] = description;
@@ -205,8 +218,6 @@ class ApiService {
     }
   }
 
-  /// Reverse geocode coordinates to a human-readable address using Mappls.
-  /// Returns map with formatted_address, locality, city, state, pincode.
   static Future<Map<String, dynamic>> reverseGeocode(double lat, double lng) async {
     try {
       final uri = Uri.parse('${AppConstants.baseUrl}/reverse-geocode/')
@@ -218,10 +229,6 @@ class ApiService {
     return {};
   }
 
-  /// Get turn-by-turn route from user location to a service center via Mappls Route API.
-  /// [eloc] is preferred over [destLat]/[destLng] for accuracy.
-  /// Returns map with steps[], distance_text, duration_text, overview_polyline,
-  /// destination_lat, destination_lng — or {} on failure.
   static Future<Map<String, dynamic>> getRoute({
     required double originLat,
     required double originLng,
@@ -266,6 +273,11 @@ class ApiService {
       return jsonDecode(userData);
     }
     return null;
+  }
+
+  static Future<String?> getCachedUserRole() async {
+    final userData = await getCachedUserData();
+    return userData?['role'] as String?;
   }
 
   // ============ Garage – Vehicles ============
@@ -364,6 +376,174 @@ class ApiService {
       Uri.parse('${AppConstants.baseUrl}/garage/vehicles/$vehicleId/records/$recordId/'),
       headers: _headers(),
     );
+    return jsonDecode(response.body);
+  }
+
+  // ============ Bookings ============
+
+  static Future<Map<String, dynamic>> createBooking(Map<String, dynamic> data) async {
+    final response = await http.post(
+      Uri.parse('${AppConstants.baseUrl}/bookings/'),
+      headers: _headers(),
+      body: jsonEncode(data),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> getMyBookings() async {
+    final response = await http.get(
+      Uri.parse('${AppConstants.baseUrl}/bookings/'),
+      headers: _headers(),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> getAvailableBookings() async {
+    final response = await http.get(
+      Uri.parse('${AppConstants.baseUrl}/bookings/available/'),
+      headers: _headers(),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> getBookingDetail(int bookingId) async {
+    final response = await http.get(
+      Uri.parse('${AppConstants.baseUrl}/bookings/$bookingId/'),
+      headers: _headers(),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> acceptBooking(int bookingId) async {
+    final response = await http.post(
+      Uri.parse('${AppConstants.baseUrl}/bookings/$bookingId/accept/'),
+      headers: _headers(),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> updateBookingStatus(int bookingId, String newStatus) async {
+    final response = await http.put(
+      Uri.parse('${AppConstants.baseUrl}/bookings/$bookingId/status/'),
+      headers: _headers(),
+      body: jsonEncode({'status': newStatus}),
+    );
+    return jsonDecode(response.body);
+  }
+
+  // ============ Charge Sheets ============
+
+  static Future<Map<String, dynamic>> createChargeSheet(Map<String, dynamic> data) async {
+    final response = await http.post(
+      Uri.parse('${AppConstants.baseUrl}/charge-sheets/'),
+      headers: _headers(),
+      body: jsonEncode(data),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> getChargeSheet(int bookingId) async {
+    final response = await http.get(
+      Uri.parse('${AppConstants.baseUrl}/charge-sheets/$bookingId/'),
+      headers: _headers(),
+    );
+    return jsonDecode(response.body);
+  }
+
+  // ============ Payments ============
+
+  static Future<Map<String, dynamic>> createPaymentOrder(int bookingId) async {
+    final response = await http.post(
+      Uri.parse('${AppConstants.baseUrl}/payments/create-order/'),
+      headers: _headers(),
+      body: jsonEncode({'booking_id': bookingId}),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> verifyPayment({
+    required int bookingId,
+    required String paymentId,
+    required String orderId,
+    required String signature,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${AppConstants.baseUrl}/payments/verify/'),
+      headers: _headers(),
+      body: jsonEncode({
+        'booking_id': bookingId,
+        'razorpay_payment_id': paymentId,
+        'razorpay_order_id': orderId,
+        'razorpay_signature': signature,
+      }),
+    );
+    return jsonDecode(response.body);
+  }
+
+  // ============ Admin ============
+
+  static Future<Map<String, dynamic>> getAdminStats() async {
+    final response = await http.get(
+      Uri.parse('${AppConstants.baseUrl}/admin/stats/'),
+      headers: _headers(),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> getAdminUsers({String? role}) async {
+    final uri = Uri.parse('${AppConstants.baseUrl}/admin/users/')
+        .replace(queryParameters: role != null ? {'role': role} : null);
+    final response = await http.get(uri, headers: _headers());
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> updateUserRole(int userId, String role) async {
+    final response = await http.put(
+      Uri.parse('${AppConstants.baseUrl}/admin/users/$userId/role/'),
+      headers: _headers(),
+      body: jsonEncode({'role': role}),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> getAdminAgents() async {
+    final response = await http.get(
+      Uri.parse('${AppConstants.baseUrl}/admin/agents/'),
+      headers: _headers(),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> createAgentByAdmin(Map<String, dynamic> data) async {
+    final response = await http.post(
+      Uri.parse('${AppConstants.baseUrl}/admin/agents/create/'),
+      headers: _headers(),
+      body: jsonEncode(data),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> approveAgent(int agentId, bool isApproved) async {
+    final response = await http.put(
+      Uri.parse('${AppConstants.baseUrl}/admin/agents/$agentId/approve/'),
+      headers: _headers(),
+      body: jsonEncode({'is_approved': isApproved}),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> getAdminScans() async {
+    final response = await http.get(
+      Uri.parse('${AppConstants.baseUrl}/admin/scans/'),
+      headers: _headers(),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> getAdminBookings({String? statusFilter}) async {
+    final uri = Uri.parse('${AppConstants.baseUrl}/admin/bookings/')
+        .replace(queryParameters: statusFilter != null ? {'status': statusFilter} : null);
+    final response = await http.get(uri, headers: _headers());
     return jsonDecode(response.body);
   }
 }

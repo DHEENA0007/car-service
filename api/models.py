@@ -3,7 +3,13 @@ from django.db import models
 
 
 class User(AbstractUser):
-    """Custom user model with additional fields for the car service app."""
+    """Custom user model with role-based access for users, agents, and admins."""
+    ROLE_CHOICES = [
+        ('user', 'User'),
+        ('agent', 'Agent'),
+        ('admin', 'Admin'),
+    ]
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     profile_picture = models.ImageField(upload_to="profiles/", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -15,6 +21,19 @@ class User(AbstractUser):
     @property
     def total_scans(self):
         return self.scans.count()
+
+
+class AgentProfile(models.Model):
+    """Extended profile for agents."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='agent_profile')
+    is_available = models.BooleanField(default=True)
+    rating = models.FloatField(default=0.0)
+    total_completed = models.IntegerField(default=0)
+    is_approved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Agent: {self.user.username}"
 
 
 class ScanHistory(models.Model):
@@ -129,3 +148,73 @@ class ServiceCenter(models.Model):
 
     def __str__(self):
         return f"{self.name} - Rating: {self.rating}"
+
+
+class Booking(models.Model):
+    """A service booking created by a user, fulfilled by an agent."""
+    STATUS_CHOICES = [
+        ('pending', 'Pending - Waiting for agent'),
+        ('accepted', 'Accepted - Agent picked up'),
+        ('in_progress', 'In Progress - Service ongoing'),
+        ('completed', 'Completed - Service done'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings')
+    agent = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='agent_bookings'
+    )
+    scan = models.ForeignKey(ScanHistory, on_delete=models.SET_NULL, null=True, blank=True)
+
+    # Contact details
+    contact_name = models.CharField(max_length=255)
+    contact_phone = models.CharField(max_length=20)
+    contact_address = models.TextField(blank=True)
+
+    # Issue details
+    detected_issue = models.CharField(max_length=255, blank=True)
+    description = models.TextField(blank=True)
+    vehicle_make = models.CharField(max_length=100, blank=True)
+    vehicle_model_name = models.CharField(max_length=100, blank=True)
+    vehicle_year = models.IntegerField(null=True, blank=True)
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    accepted_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    # Selected service center details
+    service_center_name = models.CharField(max_length=255, blank=True)
+    service_center_address = models.TextField(blank=True)
+    service_center_phone = models.CharField(max_length=50, blank=True)
+    service_center_lat = models.FloatField(null=True, blank=True)
+    service_center_lng = models.FloatField(null=True, blank=True)
+
+    # Payment
+    is_paid = models.BooleanField(default=False)
+    payment_id = models.CharField(max_length=255, blank=True)
+    razorpay_order_id = models.CharField(max_length=255, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Booking #{self.id} by {self.user.username} - {self.status}"
+
+
+class ChargeSheet(models.Model):
+    """Bill/charge sheet created by agent for a booking."""
+    booking = models.OneToOneField(Booking, on_delete=models.CASCADE, related_name='charge_sheet')
+    items = models.JSONField(default=list)  # [{"name": "Labor", "amount": 500.0}, ...]
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    tax = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    notes = models.TextField(blank=True)
+    razorpay_order_id = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"ChargeSheet for Booking #{self.booking.id} - ₹{self.total_amount}"

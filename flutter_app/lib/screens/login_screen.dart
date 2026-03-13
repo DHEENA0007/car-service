@@ -4,6 +4,8 @@ import '../utils/theme.dart';
 import '../services/api_service.dart';
 import 'register_screen.dart';
 import 'home_screen.dart';
+import 'agent/agent_home_screen.dart';
+import 'admin/admin_home_screen.dart';
 import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -41,9 +43,18 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       if (result['success'] == true) {
+        final role = result['data']?['user']?['role'] ?? 'user';
+        Widget destination;
+        if (role == 'admin') {
+          destination = const AdminHomeScreen();
+        } else if (role == 'agent') {
+          destination = const AgentHomeScreen();
+        } else {
+          destination = const HomeScreen();
+        }
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          MaterialPageRoute(builder: (_) => destination),
         );
       } else {
         _showError(result['message'] ?? 'Login failed');

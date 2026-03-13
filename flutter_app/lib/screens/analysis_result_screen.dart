@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../utils/theme.dart';
 import '../utils/constants.dart';
 import 'service_centers_screen.dart';
+import 'booking/booking_form_screen.dart';
 
 class AnalysisResultScreen extends StatelessWidget {
   final Map<String, dynamic> scanData;
@@ -253,6 +254,47 @@ class AnalysisResultScreen extends StatelessWidget {
               )
                   .animate()
                   .fadeIn(delay: 1000.ms, duration: 500.ms)
+                  .slideY(begin: 0.2, end: 0),
+
+              const SizedBox(height: 12),
+
+              // Book Service Button
+              SizedBox(
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BookingFormScreen(scanData: scanData),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.success,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.build_circle_outlined, color: Colors.white),
+                      SizedBox(width: 10),
+                      Text(
+                        'Book Service Now',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+                  .animate()
+                  .fadeIn(delay: 1100.ms, duration: 500.ms)
                   .slideY(begin: 0.2, end: 0),
 
               const SizedBox(height: 16),
