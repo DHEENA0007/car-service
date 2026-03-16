@@ -767,6 +767,8 @@ class _UsersTabState extends State<_UsersTab> {
                                       duration: 300.ms);
                             },
                           ),
+              ),
+            ),
           ),
         ],
       ),
@@ -1604,6 +1606,8 @@ class _ScansSubTabState extends State<_ScansSubTab>
                             .fadeIn(duration: 280.ms);
                       },
                     ),
+        ),
+      ),
     );
   }
 
@@ -1898,6 +1902,8 @@ class _BookingsSubTabState extends State<_BookingsSubTab>
                                       duration: 280.ms);
                             },
                           ),
+              ),
+            ),
           ),
         ),
       ],
