@@ -29,9 +29,7 @@ class _AgentActiveBookingScreenState extends State<AgentActiveBookingScreen> {
   void initState() {
     super.initState();
     _booking = widget.booking;
-    if (_booking.hasChargeSheet) {
-      _loadChargeSheet();
-    }
+    _loadChargeSheet();
   }
 
   Future<void> _refresh() async {
@@ -43,9 +41,7 @@ class _AgentActiveBookingScreenState extends State<AgentActiveBookingScreen> {
           _booking = BookingModel.fromMap(
               res['data'] as Map<String, dynamic>);
         });
-        if (_booking.hasChargeSheet) {
-          await _loadChargeSheet();
-        }
+        await _loadChargeSheet();
       }
     } catch (_) {
     } finally {
@@ -497,7 +493,7 @@ class _AgentActiveBookingScreenState extends State<AgentActiveBookingScreen> {
                               color: AppTheme.primaryColor, strokeWidth: 2),
                         ),
                       )
-                    : _booking.hasChargeSheet && _chargeSheet != null
+                    : _chargeSheet != null
                         ? _buildChargeSheetSummary()
                         : _buildNoChargeSheet(),
               ).animate().fadeIn(delay: 320.ms, duration: 300.ms),

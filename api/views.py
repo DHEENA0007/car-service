@@ -459,9 +459,9 @@ def booking_list(request):
     """
     if request.method == "GET":
         if is_agent(request.user):
-            bookings = Booking.objects.filter(agent=request.user)
+            bookings = Booking.objects.filter(agent=request.user).select_related('charge_sheet')
         else:
-            bookings = Booking.objects.filter(user=request.user)
+            bookings = Booking.objects.filter(user=request.user).select_related('charge_sheet')
         serializer = BookingSerializer(bookings, many=True)
         return Response({"success": True, "data": serializer.data})
 
@@ -505,12 +505,13 @@ def booking_available(request):
 def booking_detail(request, booking_id):
     """Get booking detail. User sees own, agent sees assigned, admin sees all."""
     try:
+        qs = Booking.objects.select_related('charge_sheet')
         if is_admin(request.user):
-            booking = Booking.objects.get(id=booking_id)
+            booking = qs.get(id=booking_id)
         elif is_agent(request.user):
-            booking = Booking.objects.get(id=booking_id, agent=request.user)
+            booking = qs.get(id=booking_id, agent=request.user)
         else:
-            booking = Booking.objects.get(id=booking_id, user=request.user)
+            booking = qs.get(id=booking_id, user=request.user)
     except Booking.DoesNotExist:
         return Response({"success": False, "message": "Booking not found."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -625,12 +626,13 @@ def charge_sheet_create(request):
 def charge_sheet_detail(request, booking_id):
     """Get charge sheet for a booking."""
     try:
+        qs = Booking.objects.select_related('charge_sheet')
         if is_agent(request.user):
-            booking = Booking.objects.get(id=booking_id, agent=request.user)
+            booking = qs.get(id=booking_id, agent=request.user)
         elif is_admin(request.user):
-            booking = Booking.objects.get(id=booking_id)
+            booking = qs.get(id=booking_id)
         else:
-            booking = Booking.objects.get(id=booking_id, user=request.user)
+            booking = qs.get(id=booking_id, user=request.user)
     except Booking.DoesNotExist:
         return Response({"success": False, "message": "Booking not found."}, status=status.HTTP_404_NOT_FOUND)
 
