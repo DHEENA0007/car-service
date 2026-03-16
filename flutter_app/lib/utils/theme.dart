@@ -10,20 +10,20 @@ class AppTheme {
   static const Color critical = Color(0xFF991B1B);
 
   // Light Theme Palette
-  static const Color lPrimary = Color(0xFF0061FF);
-  static const Color lPrimaryDark = Color(0xFF004ECF);
-  static const Color lPrimaryLight = Color(0xFFE0E7FF);
-  static const Color lAccent = Color(0xFF00D2FF);
-  static const Color lScaffoldBg = Color(0xFFF8FAFC);
+  static const Color lPrimary = Color(0xFF8B5CF6); // Violet
+  static const Color lPrimaryDark = Color(0xFF6D28D9); // Darker Violet
+  static const Color lPrimaryLight = Color(0xFFFDF2F8); // Very Light Pink
+  static const Color lAccent = Color(0xFFF472B6); // Pink
+  static const Color lScaffoldBg = Color(0xFFFFF7F9); // Light Pinkish White
   static const Color lCardBg = Colors.white;
-  static const Color lSurfaceBg = Color(0xFFF1F5F9);
-  static const Color lInputBg = Color(0xFFF1F5F9);
-  static const Color lTextPrimary = Color(0xFF0F172A);
-  static const Color lTextSecondary = Color(0xFF475569);
-  static const Color lTextMuted = Color(0xFF94A3B8);
+  static const Color lSurfaceBg = Color(0xFFFCE7F3); // Light Pink Surface
+  static const Color lInputBg = Color(0xFFFDF2F8); // Lightest Pink Input
+  static const Color lTextPrimary = Color(0xFF1E1B4B); // Dark Violet/Blue Text
+  static const Color lTextSecondary = Color(0xFF4C1D95); // Violet Text
+  static const Color lTextMuted = Color(0xFF9D7BB0); // Muted Violet
 
   // Dark Theme Palette
-  static const Color dPrimary = Color(0xFF1A73E8);
+  static const Color dPrimary = Color(0xFF8B5CF6);
   static const Color dScaffoldBg = Color(0xFF0F172A);
   static const Color dCardBg = Color(0xFF1E293B);
   static const Color dSurfaceBg = Color(0xFF334155);
@@ -49,13 +49,13 @@ class AppTheme {
 
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFF0061FF), Color(0xFF00D2FF)],
+    colors: [Color(0xFF8B5CF6), Color(0xFFF472B6)], // Violet to Pink
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient lightGradient = LinearGradient(
-    colors: [Color(0xFFF8FAFC), Color(0xFFF1F5F9)],
+    colors: [Color(0xFFFFF7F9), Color(0xFFFCE7F3)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
@@ -67,7 +67,7 @@ class AppTheme {
   );
 
   static const LinearGradient cardGradient = LinearGradient(
-    colors: [Colors.white, Color(0xFFF1F5F9)],
+    colors: [Colors.white, Color(0xFFFCE7F3)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

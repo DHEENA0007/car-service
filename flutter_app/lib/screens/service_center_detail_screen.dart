@@ -120,22 +120,22 @@ class _ServiceCenterDetailScreenState
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1565C0).withValues(alpha: 0.12),
+                            color: AppTheme.primaryColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                                color: const Color(0xFF1565C0)
+                                color: AppTheme.primaryColor
                                     .withValues(alpha: 0.3)),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.verified,
-                                  size: 13, color: Color(0xFF1565C0)),
+                                  size: 13, color: AppTheme.primaryColor),
                               SizedBox(width: 5),
                               Text(
                                 'Verified Location',
                                 style: TextStyle(
-                                  color: Color(0xFF1565C0),
+                                  color: AppTheme.primaryColor,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -338,7 +338,7 @@ class _ServiceCenterDetailScreenState
                     Marker(
                       point: LatLng(lat.toDouble(), lng.toDouble()),
                       child: const Icon(Icons.location_on,
-                          color: Color(0xFFE53935), size: 36),
+                          color: AppTheme.accentColor, size: 36),
                     ),
                   ]),
                 ],

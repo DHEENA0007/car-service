@@ -13,12 +13,18 @@ class AddVehicleScreen extends StatefulWidget {
 
 class _AddVehicleScreenState extends State<AddVehicleScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _makeCtrl = TextEditingController();
-  final _modelCtrl = TextEditingController();
   final _yearCtrl = TextEditingController();
   final _colorCtrl = TextEditingController();
   final _plateCtrl = TextEditingController();
   final _vinCtrl = TextEditingController();
+  
+  List<String> _makes = [];
+  List<String> _models = [];
+  String? _selectedMake;
+  String? _selectedModel;
+  
+  bool _isLoadingMakes = false;
+  bool _isLoadingModels = false;
   bool _isSaving = false;
 
   bool get _isEdit => widget.vehicle != null;
@@ -26,21 +32,59 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   @override
   void initState() {
     super.initState();
+    _loadMakes();
     if (_isEdit) {
       final v = widget.vehicle!;
-      _makeCtrl.text = v['make'] ?? '';
-      _modelCtrl.text = v['model'] ?? '';
+      _selectedMake = v['make'] as String?;
+      _selectedModel = v['model'] as String?;
       _yearCtrl.text = v['year']?.toString() ?? '';
       _colorCtrl.text = v['color'] ?? '';
       _plateCtrl.text = v['license_plate'] ?? '';
       _vinCtrl.text = v['vin'] ?? '';
+      
+      if (_selectedMake != null && _selectedMake!.isNotEmpty) {
+        _loadModels(_selectedMake!);
+      }
+    }
+  }
+
+  Future<void> _loadMakes() async {
+    setState(() => _isLoadingMakes = true);
+    final makes = await ApiService.getCarMakes();
+    if (mounted) {
+      setState(() {
+        _makes = makes;
+        _isLoadingMakes = false;
+        // Ensure selected make is in the list if in edit mode
+        if (_selectedMake != null && !_makes.contains(_selectedMake)) {
+           _makes.add(_selectedMake!);
+           _makes.sort();
+        }
+      });
+    }
+  }
+
+  Future<void> _loadModels(String make) async {
+    setState(() {
+      _isLoadingModels = true;
+      _models = [];
+    });
+    final models = await ApiService.getCarModels(make);
+    if (mounted) {
+      setState(() {
+        _models = models;
+        _isLoadingModels = false;
+        // Ensure selected model is in the list if in edit mode
+        if (_selectedModel != null && !_models.contains(_selectedModel)) {
+          _models.add(_selectedModel!);
+          _models.sort();
+        }
+      });
     }
   }
 
   @override
   void dispose() {
-    _makeCtrl.dispose();
-    _modelCtrl.dispose();
     _yearCtrl.dispose();
     _colorCtrl.dispose();
     _plateCtrl.dispose();
@@ -53,8 +97,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     setState(() => _isSaving = true);
 
     final data = {
-      'make': _makeCtrl.text.trim(),
-      'model': _modelCtrl.text.trim(),
+      'make': _selectedMake,
+      'model': _selectedModel,
       'year': int.parse(_yearCtrl.text.trim()),
       if (_colorCtrl.text.trim().isNotEmpty) 'color': _colorCtrl.text.trim(),
       if (_plateCtrl.text.trim().isNotEmpty) 'license_plate': _plateCtrl.text.trim(),
@@ -110,12 +154,33 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                 ),
                 const SizedBox(height: 28),
 
-                _buildField('Make *', 'e.g. Toyota, Honda', _makeCtrl,
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Make is required' : null),
+                _buildDropdownField(
+                  label: 'Make *',
+                  hint: 'Select Make',
+                  value: _selectedMake,
+                  items: _makes,
+                  isLoading: _isLoadingMakes,
+                  onChanged: (val) {
+                    setState(() {
+                      _selectedMake = val;
+                      _selectedModel = null;
+                    });
+                    if (val != null) _loadModels(val);
+                  },
+                  validator: (v) => v == null ? 'Make is required' : null,
+                ),
                 const SizedBox(height: 16),
 
-                _buildField('Model *', 'e.g. Camry, Civic', _modelCtrl,
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Model is required' : null),
+                _buildDropdownField(
+                  label: 'Model *',
+                  hint: _selectedMake == null ? 'Select make first' : 'Select Model',
+                  value: _selectedModel,
+                  items: _models,
+                  isLoading: _isLoadingModels,
+                  enabled: _selectedMake != null,
+                  onChanged: (val) => setState(() => _selectedModel = val),
+                  validator: (v) => v == null ? 'Model is required' : null,
+                ),
                 const SizedBox(height: 16),
 
                 _buildField('Year *', 'e.g. 2020', _yearCtrl,
@@ -161,6 +226,56 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildDropdownField({
+    required String label,
+    required String hint,
+    required String? value,
+    required List<String> items,
+    required void Function(String?) onChanged,
+    bool isLoading = false,
+    bool enabled = true,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label,
+                style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
+            if (isLoading)
+              const SizedBox(
+                width: 14, height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryColor),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: value,
+          onChanged: enabled && !isLoading ? onChanged : null,
+          validator: validator,
+          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 15),
+          decoration: InputDecoration(
+            hintText: hint,
+            filled: true,
+            fillColor: enabled ? AppTheme.inputBg : AppTheme.inputBg.withValues(alpha: 0.5),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+          items: items.map((e) => DropdownMenuItem(value: e, child: Text(e, overflow: TextOverflow.ellipsis))).toList(),
+          isExpanded: true,
+          menuMaxHeight: 300,
+          dropdownColor: AppTheme.cardBg,
+        ),
+      ],
     );
   }
 

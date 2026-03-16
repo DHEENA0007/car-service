@@ -226,7 +226,7 @@ class _MapNavigationScreenState extends State<MapNavigationScreen> {
                 PolylineLayer(polylines: [
                   Polyline(
                     points: _routePoints,
-                    color: const Color(0xFF1565C0),
+                    color: const Color(0xFF8B5CF6), // Violet polyline
                     strokeWidth: 5.0,
                   ),
                 ]),
@@ -290,7 +290,7 @@ class _MapNavigationScreenState extends State<MapNavigationScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.location_on, color: Color(0xFFE53935), size: 32),
+            const Icon(Icons.location_on, color: AppTheme.accentColor, size: 32),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(

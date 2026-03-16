@@ -197,22 +197,22 @@ class ServiceCentersScreen extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1565C0).withValues(alpha: 0.12),
+                              color: AppTheme.primaryColor.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                  color: const Color(0xFF1565C0)
+                                  color: AppTheme.primaryColor
                                       .withValues(alpha: 0.3)),
                             ),
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(Icons.verified,
-                                    size: 11, color: Color(0xFF1565C0)),
+                                    size: 11, color: AppTheme.primaryColor),
                                 SizedBox(width: 4),
                                 Text(
                                   'Mappls Verified',
                                   style: TextStyle(
-                                    color: Color(0xFF1565C0),
+                                    color: AppTheme.primaryColor,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                   ),

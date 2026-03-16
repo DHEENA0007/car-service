@@ -392,7 +392,7 @@ class _AgentActiveBookingScreenState extends State<AgentActiveBookingScreen> {
                 _buildSectionCard(
                   title: 'Service Center',
                   icon: Icons.store_rounded,
-                  iconColor: const Color(0xFF1565C0),
+                  iconColor: AppTheme.primaryColor,
                   child: Column(
                     children: [
                       _DetailRow(

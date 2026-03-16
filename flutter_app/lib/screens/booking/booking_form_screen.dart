@@ -22,18 +22,62 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
   final _contactAddressCtrl = TextEditingController();
   final _issueCtrl = TextEditingController();
   final _descriptionCtrl = TextEditingController();
-  final _vehicleMakeCtrl = TextEditingController();
-  final _vehicleModelCtrl = TextEditingController();
   final _vehicleYearCtrl = TextEditingController();
 
+  List<String> _makes = [];
+  List<String> _models = [];
+  String? _selectedMake;
+  String? _selectedModel;
+
+  bool _isLoadingMakes = false;
+  bool _isLoadingModels = false;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    _loadMakes();
     if (widget.scanData != null) {
       _issueCtrl.text = widget.scanData!['detected_issue'] ?? '';
       _descriptionCtrl.text = widget.scanData!['description'] ?? '';
+      _selectedMake = widget.scanData!['vehicle_make'] as String?;
+      _selectedModel = widget.scanData!['vehicle_model_name'] as String?;
+      if (_selectedMake != null && _selectedMake!.isNotEmpty) {
+        _loadModels(_selectedMake!);
+      }
+    }
+  }
+
+  Future<void> _loadMakes() async {
+    setState(() => _isLoadingMakes = true);
+    final makes = await ApiService.getCarMakes();
+    if (mounted) {
+      setState(() {
+        _makes = makes;
+        _isLoadingMakes = false;
+        if (_selectedMake != null && !_makes.contains(_selectedMake)) {
+          _makes.add(_selectedMake!);
+          _makes.sort();
+        }
+      });
+    }
+  }
+
+  Future<void> _loadModels(String make) async {
+    setState(() {
+      _isLoadingModels = true;
+      _models = [];
+    });
+    final models = await ApiService.getCarModels(make);
+    if (mounted) {
+      setState(() {
+        _models = models;
+        _isLoadingModels = false;
+        if (_selectedModel != null && !_models.contains(_selectedModel)) {
+          _models.add(_selectedModel!);
+          _models.sort();
+        }
+      });
     }
   }
 
@@ -44,8 +88,6 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
     _contactAddressCtrl.dispose();
     _issueCtrl.dispose();
     _descriptionCtrl.dispose();
-    _vehicleMakeCtrl.dispose();
-    _vehicleModelCtrl.dispose();
     _vehicleYearCtrl.dispose();
     super.dispose();
   }
@@ -62,8 +104,8 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         'contact_address': _contactAddressCtrl.text.trim(),
         'detected_issue': _issueCtrl.text.trim(),
         'description': _descriptionCtrl.text.trim(),
-        'vehicle_make': _vehicleMakeCtrl.text.trim(),
-        'vehicle_model_name': _vehicleModelCtrl.text.trim(),
+        'vehicle_make': _selectedMake ?? '',
+        'vehicle_model_name': _selectedModel ?? '',
         'vehicle_year': _vehicleYearCtrl.text.trim().isNotEmpty
             ? int.tryParse(_vehicleYearCtrl.text.trim())
             : null,
@@ -263,19 +305,32 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                   _SectionHeader(title: 'Vehicle Information (Optional)')
                       .animate()
                       .fadeIn(duration: 400.ms, delay: 450.ms),
-                  const SizedBox(height: 12),
-                  _buildField(
-                    controller: _vehicleMakeCtrl,
+                   const SizedBox(height: 12),
+                  _buildDropdownField(
                     label: 'Vehicle Make',
-                    hint: 'e.g. Toyota, Honda, Ford',
+                    hint: 'Select Make',
                     icon: Icons.directions_car_outlined,
+                    value: _selectedMake,
+                    items: _makes,
+                    isLoading: _isLoadingMakes,
+                    onChanged: (val) {
+                      setState(() {
+                        _selectedMake = val;
+                        _selectedModel = null;
+                      });
+                      if (val != null) _loadModels(val);
+                    },
                   ).animate().fadeIn(duration: 400.ms, delay: 500.ms),
                   const SizedBox(height: 14),
-                  _buildField(
-                    controller: _vehicleModelCtrl,
+                  _buildDropdownField(
                     label: 'Vehicle Model',
-                    hint: 'e.g. Corolla, Civic, F-150',
+                    hint: _selectedMake == null ? 'Select make first' : 'Select Model',
                     icon: Icons.car_repair_rounded,
+                    value: _selectedModel,
+                    items: _models,
+                    isLoading: _isLoadingModels,
+                    enabled: _selectedMake != null,
+                    onChanged: (val) => setState(() => _selectedModel = val),
                   ).animate().fadeIn(duration: 400.ms, delay: 550.ms),
                   const SizedBox(height: 14),
                   _buildField(
@@ -313,6 +368,56 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
           ),
         ),
         if (_isLoading) const _LoadingOverlay(),
+      ],
+    );
+  }
+
+  Widget _buildDropdownField({
+    required String label,
+    required String hint,
+    required IconData icon,
+    required String? value,
+    required List<String> items,
+    required void Function(String?) onChanged,
+    bool isLoading = false,
+    bool enabled = true,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textSecondary,
+              ),
+            ),
+            if (isLoading)
+              const SizedBox(
+                width: 12, height: 12,
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryColor),
+              ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          value: value,
+          onChanged: enabled && !isLoading ? onChanged : null,
+          style: const TextStyle(fontSize: 15, color: AppTheme.textPrimary),
+          decoration: InputDecoration(
+            hintText: hint,
+            prefixIcon: Icon(icon, color: AppTheme.textMuted, size: 20),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          ),
+          items: items.map((e) => DropdownMenuItem(value: e, child: Text(e, overflow: TextOverflow.ellipsis))).toList(),
+          isExpanded: true,
+          menuMaxHeight: 300,
+          dropdownColor: AppTheme.cardBg,
+        ),
       ],
     );
   }
@@ -428,10 +533,10 @@ class _ServiceCenterBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1565C0).withValues(alpha: 0.08),
+        color: AppTheme.primaryColor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         border: Border.all(
-          color: const Color(0xFF1565C0).withValues(alpha: 0.25),
+          color: AppTheme.primaryColor.withValues(alpha: 0.25),
         ),
       ),
       child: Row(
@@ -440,11 +545,11 @@ class _ServiceCenterBanner extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFF1565C0).withValues(alpha: 0.15),
+              color: AppTheme.primaryColor.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.store_rounded,
-                color: Color(0xFF1565C0), size: 20),
+                color: AppTheme.primaryColor, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -454,7 +559,7 @@ class _ServiceCenterBanner extends StatelessWidget {
                 const Text(
                   'Selected Service Center',
                   style: TextStyle(
-                    color: Color(0xFF1565C0),
+                    color: AppTheme.primaryColor,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),

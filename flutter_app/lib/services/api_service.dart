@@ -546,4 +546,45 @@ class ApiService {
     final response = await http.get(uri, headers: _headers());
     return jsonDecode(response.body);
   }
+
+  // ============ Vehicle Data (NHTSA API) ============
+
+  static Future<List<String>> getCarMakes() async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://vpic.nhtsa.dot.gov/api/vehicles/getallmakes?format=json'),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final results = data['Results'] as List? ?? [];
+        return results
+            .map((e) => (e['Make_Name'] as String).trim())
+            .where((name) => name.isNotEmpty)
+            .toSet() // Remove duplicates
+            .toList()
+          ..sort((a, b) => a.compareTo(b));
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  static Future<List<String>> getCarModels(String make) async {
+    if (make.isEmpty) return [];
+    try {
+      final response = await http.get(
+        Uri.parse('https://vpic.nhtsa.dot.gov/api/vehicles/getmodelsformake/$make?format=json'),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final results = data['Results'] as List? ?? [];
+        return results
+            .map((e) => (e['Model_Name'] as String).trim())
+            .where((name) => name.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort((a, b) => a.compareTo(b));
+      }
+    } catch (_) {}
+    return [];
+  }
 }
