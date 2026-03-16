@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -547,9 +548,24 @@ class ApiService {
     return jsonDecode(response.body);
   }
 
-  // ============ Vehicle Data (NHTSA API) ============
+  // ============ Vehicle Data (local asset, NHTSA fallback) ============
+
+  static Map<String, dynamic>? _vehicleData;
+
+  static Future<Map<String, dynamic>> _loadVehicleData() async {
+    _vehicleData ??= jsonDecode(
+      await rootBundle.loadString('assets/vehicle_data.json'),
+    ) as Map<String, dynamic>;
+    return _vehicleData!;
+  }
 
   static Future<List<String>> getCarMakes() async {
+    try {
+      final data = await _loadVehicleData();
+      final makes = (data['makes'] as List?)?.cast<String>() ?? [];
+      return makes;
+    } catch (_) {}
+    // fallback to network
     try {
       final response = await http.get(
         Uri.parse('https://vpic.nhtsa.dot.gov/api/vehicles/getallmakes?format=json'),
@@ -560,9 +576,9 @@ class ApiService {
         return results
             .map((e) => (e['Make_Name'] as String).trim())
             .where((name) => name.isNotEmpty)
-            .toSet() // Remove duplicates
+            .toSet()
             .toList()
-          ..sort((a, b) => a.compareTo(b));
+          ..sort();
       }
     } catch (_) {}
     return [];
@@ -570,6 +586,19 @@ class ApiService {
 
   static Future<List<String>> getCarModels(String make) async {
     if (make.isEmpty) return [];
+    try {
+      final data = await _loadVehicleData();
+      final modelsMap = data['models'] as Map<String, dynamic>? ?? {};
+      // Case-insensitive lookup
+      final key = modelsMap.keys.firstWhere(
+        (k) => k.toLowerCase() == make.toLowerCase(),
+        orElse: () => '',
+      );
+      if (key.isNotEmpty) {
+        return (modelsMap[key] as List).cast<String>();
+      }
+    } catch (_) {}
+    // fallback to network for makes not in local asset
     try {
       final response = await http.get(
         Uri.parse('https://vpic.nhtsa.dot.gov/api/vehicles/getmodelsformake/$make?format=json'),
@@ -582,7 +611,7 @@ class ApiService {
             .where((name) => name.isNotEmpty)
             .toSet()
             .toList()
-          ..sort((a, b) => a.compareTo(b));
+          ..sort();
       }
     } catch (_) {}
     return [];

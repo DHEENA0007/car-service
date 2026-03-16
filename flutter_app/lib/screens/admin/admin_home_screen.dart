@@ -60,6 +60,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isWide = MediaQuery.of(context).size.width > 900;
     final tabLabels = ['Dashboard', 'Users', 'Agents', 'History'];
     final tabIcons = [
       Icons.dashboard_rounded,
@@ -70,7 +71,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBg,
-      appBar: AppBar(
+      appBar: isWide ? null : AppBar(
         backgroundColor: AppTheme.scaffoldBg,
         elevation: 0,
         centerTitle: true,
@@ -112,73 +113,91 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _tabs,
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppTheme.cardBg,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
+      body: Row(
+        children: [
+          if (isWide)
+            _AdminSideNav(
+              selectedIndex: _selectedIndex,
+              onSelected: (i) => setState(() => _selectedIndex = i),
+              labels: tabLabels,
+              icons: tabIcons,
+              onLogout: _logout,
             ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: Row(
-              children: List.generate(4, (index) {
-                final selected = _selectedIndex == index;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _selectedIndex = index),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeInOut,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 4),
-                      decoration: BoxDecoration(
-                        gradient: selected ? AppTheme.primaryGradient : null,
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusMd),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            tabIcons[index],
-                            size: 22,
-                            color: selected
-                                ? Colors.white
-                                : AppTheme.textMuted,
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            tabLabels[index],
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: selected
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
-                              color: selected
-                                  ? Colors.white
-                                  : AppTheme.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }),
+          Expanded(
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: _tabs,
             ),
           ),
-        ),
+        ],
       ),
+      bottomNavigationBar: isWide
+          ? null
+          : Container(
+              decoration: BoxDecoration(
+                color: AppTheme.cardBg,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 20,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  child: Row(
+                    children: List.generate(4, (index) {
+                      final selected = _selectedIndex == index;
+                      return Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _selectedIndex = index),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeInOut,
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 8, horizontal: 4),
+                            decoration: BoxDecoration(
+                              gradient:
+                                  selected ? AppTheme.primaryGradient : null,
+                              borderRadius:
+                                  BorderRadius.circular(AppTheme.radiusMd),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  tabIcons[index],
+                                  size: 22,
+                                  color: selected
+                                      ? Colors.white
+                                      : AppTheme.textMuted,
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  tabLabels[index],
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: selected
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                    color: selected
+                                        ? Colors.white
+                                        : AppTheme.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              ),
+            ),
     );
   }
 }
@@ -330,12 +349,13 @@ class _DashboardTabState extends State<_DashboardTab> {
                   },
                   childCount: _statCards.length,
                 ),
-                gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.5,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount:
+                      MediaQuery.of(context).size.width > 1200 ? 4 : 2,
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  childAspectRatio:
+                      MediaQuery.of(context).size.width > 1200 ? 1.8 : 1.5,
                 ),
               ),
             ),
@@ -603,41 +623,49 @@ class _UsersTabState extends State<_UsersTab> {
             color: AppTheme.scaffoldBg,
             padding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: _roles.map((role) {
-                  final selected = _roleFilter == role;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: Text(role.toUpperCase()),
-                      selected: selected,
-                      onSelected: (_) {
-                        setState(() => _roleFilter = role);
-                        _loadUsers();
-                      },
-                      selectedColor:
-                          AppTheme.primaryColor.withValues(alpha: 0.15),
-                      checkmarkColor: AppTheme.primaryColor,
-                      labelStyle: TextStyle(
-                        color: selected
-                            ? AppTheme.primaryColor
-                            : AppTheme.textSecondary,
-                        fontWeight: selected
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                        fontSize: 12,
+            alignment: Alignment.center,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1000),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _roles.map((role) {
+                    final selected = _roleFilter == role;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        label: Text(role.toUpperCase()),
+                        selected: selected,
+                        onSelected: (_) {
+                          setState(() => _roleFilter = role);
+                          _loadUsers();
+                        },
+                        selectedColor:
+                            AppTheme.primaryColor.withValues(alpha: 0.15),
+                        checkmarkColor: AppTheme.primaryColor,
+                        labelStyle: TextStyle(
+                          color: selected
+                              ? AppTheme.primaryColor
+                              : AppTheme.textSecondary,
+                          fontWeight: selected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          fontSize: 12,
+                        ),
                       ),
-                    ),
-                  );
-                }).toList(),
+                    );
+                  }).toList(),
+                ),
               ),
             ),
           ),
 
           Expanded(
-            child: _loading
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1000),
+                child: _loading
                 ? _buildShimmer()
                 : _error != null
                     ? _ErrorBanner(message: _error!, onRetry: _loadUsers)
@@ -867,205 +895,40 @@ class _AgentsTabState extends State<_AgentsTab> {
   }
 
   Future<void> _showCreateAgentDialog() async {
-    final formKey = GlobalKey<FormState>();
-    final usernameCtrl = TextEditingController();
-    final emailCtrl = TextEditingController();
-    final firstNameCtrl = TextEditingController();
-    final lastNameCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController();
-    final passwordCtrl = TextEditingController();
-    bool submitting = false;
-    bool obscure = true;
+    final isWide = MediaQuery.of(context).size.width > 900;
 
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppTheme.cardBg,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) => Padding(
-          padding: EdgeInsets.only(
-            left: 20, right: 20, top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-          ),
-          child: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Handle
-                  Center(
-                    child: Container(
-                      width: 40, height: 4,
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceBg,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          gradient: AppTheme.primaryGradient,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.support_agent_rounded, color: Colors.white, size: 22),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'Create New Agent',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Agent will be auto-approved and can start accepting bookings.',
-                    style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
-                  ),
-                  const SizedBox(height: 20),
-                  // Username
-                  TextFormField(
-                    controller: usernameCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Username *',
-                      prefixIcon: Icon(Icons.person_outline),
-                    ),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  // Email
-                  TextFormField(
-                    controller: emailCtrl,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email_outlined),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // First + Last name row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: firstNameCtrl,
-                          decoration: const InputDecoration(labelText: 'First Name'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: TextFormField(
-                          controller: lastNameCtrl,
-                          decoration: const InputDecoration(labelText: 'Last Name'),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  // Phone
-                  TextFormField(
-                    controller: phoneCtrl,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      labelText: 'Phone Number',
-                      prefixIcon: Icon(Icons.phone_outlined),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Password
-                  TextFormField(
-                    controller: passwordCtrl,
-                    obscureText: obscure,
-                    decoration: InputDecoration(
-                      labelText: 'Password *',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(
-                        icon: Icon(obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
-                        onPressed: () => setModalState(() => obscure = !obscure),
-                      ),
-                    ),
-                    validator: (v) => (v == null || v.length < 6) ? 'Min 6 characters' : null,
-                  ),
-                  const SizedBox(height: 24),
-                  // Submit button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: submitting
-                          ? null
-                          : () async {
-                              if (!formKey.currentState!.validate()) return;
-                              setModalState(() => submitting = true);
-                              final resp = await ApiService.createAgentByAdmin({
-                                'username': usernameCtrl.text.trim(),
-                                'email': emailCtrl.text.trim(),
-                                'first_name': firstNameCtrl.text.trim(),
-                                'last_name': lastNameCtrl.text.trim(),
-                                'phone_number': phoneCtrl.text.trim(),
-                                'password': passwordCtrl.text,
-                              });
-                              setModalState(() => submitting = false);
-                              if (ctx.mounted) Navigator.pop(ctx);
-                              if (resp['success'] == true) {
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Agent "${usernameCtrl.text.trim()}" created successfully!'),
-                                      backgroundColor: AppTheme.success,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                  _loadAgents();
-                                }
-                              } else {
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(resp['message'] ?? 'Failed to create agent'),
-                                      backgroundColor: AppTheme.error,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                }
-                              }
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                        ),
-                      ),
-                      child: submitting
-                          ? const SizedBox(
-                              width: 20, height: 20,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                            )
-                          : const Text(
-                              'Create Agent',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
-                            ),
-                    ),
-                  ),
-                ],
-              ),
+    if (isWide) {
+      await showDialog(
+        context: context,
+        builder: (ctx) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: _AgentCreateForm(
+              onSuccess: () {
+                Navigator.pop(ctx);
+                _loadAgents();
+              },
             ),
           ),
         ),
-      ),
-    );
+      );
+    } else {
+      await showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: AppTheme.cardBg,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        builder: (ctx) => _AgentCreateForm(
+          onSuccess: () {
+            Navigator.pop(ctx);
+            _loadAgents();
+          },
+        ),
+      );
+    }
   }
 
   @override
@@ -1081,194 +944,200 @@ class _AgentsTabState extends State<_AgentsTab> {
       body: RefreshIndicator(
         onRefresh: _loadAgents,
         color: AppTheme.primaryColor,
-        child: _loading
-            ? _buildShimmer()
-            : _error != null
-                ? _ErrorBanner(message: _error!, onRetry: _loadAgents)
-                : _agents.isEmpty
-                    ? _EmptyState(
-                        icon: Icons.support_agent_outlined,
-                        message: 'No agents yet. Tap + Add Agent to create one.',
-                      )
-                    : ListView.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      itemCount: _agents.length,
-                      itemBuilder: (context, index) {
-                        final agent = _agents[index];
-                        final isApproved =
-                            agent['is_approved'] as bool? ?? false;
-                        final name = (agent['full_name'] as String?)
-                                ?.trim()
-                                .isNotEmpty ==
-                            true
-                            ? agent['full_name'] as String
-                            : (agent['username'] ?? 'Unknown') as String;
-                        final email = agent['email'] ?? '';
-                        final completed =
-                            agent['total_completed'] ?? 0;
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1000),
+            child: _loading
+                ? _buildShimmer()
+                : _error != null
+                    ? _ErrorBanner(message: _error!, onRetry: _loadAgents)
+                    : _agents.isEmpty
+                        ? _EmptyState(
+                            icon: Icons.support_agent_outlined,
+                            message: 'No agents yet. Tap + Add Agent to create one.',
+                          )
+                        : ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            itemCount: _agents.length,
+                            itemBuilder: (context, index) {
+                              final agent = _agents[index];
+                              final isApproved =
+                                  agent['is_approved'] as bool? ?? false;
+                              final name = (agent['full_name'] as String?)
+                                      ?.trim()
+                                      .isNotEmpty ==
+                                  true
+                                  ? agent['full_name'] as String
+                                  : (agent['username'] ?? 'Unknown') as String;
+                              final email = agent['email'] ?? '';
+                              final completed =
+                                  agent['total_completed'] ?? 0;
 
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          decoration: BoxDecoration(
-                            color: AppTheme.cardBg,
-                            borderRadius: BorderRadius.circular(
-                                AppTheme.radiusLg),
-                            boxShadow: AppTheme.cardShadow,
-                            border: Border.all(
-                              color: isApproved
-                                  ? AppTheme.success
-                                      .withValues(alpha: 0.2)
-                                  : AppTheme.warning
-                                      .withValues(alpha: 0.2),
-                              width: 1,
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 44,
-                                      height: 44,
-                                      decoration: BoxDecoration(
-                                        gradient:
-                                            AppTheme.primaryGradient,
-                                        borderRadius:
-                                            BorderRadius.circular(
-                                                AppTheme.radiusMd),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          name.isNotEmpty
-                                              ? name[0].toUpperCase()
-                                              : 'A',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 18,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.cardBg,
+                                  borderRadius: BorderRadius.circular(
+                                      AppTheme.radiusLg),
+                                  boxShadow: AppTheme.cardShadow,
+                                  border: Border.all(
+                                    color: isApproved
+                                        ? AppTheme.success
+                                            .withValues(alpha: 0.2)
+                                        : AppTheme.warning
+                                            .withValues(alpha: 0.2),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
                                         children: [
-                                          Text(
-                                            name,
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppTheme.textPrimary,
+                                          Container(
+                                            width: 44,
+                                            height: 44,
+                                            decoration: BoxDecoration(
+                                              gradient:
+                                                  AppTheme.primaryGradient,
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                      AppTheme.radiusMd),
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                name.isNotEmpty
+                                                    ? name[0].toUpperCase()
+                                                    : 'A',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 18,
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                          Text(
-                                            email,
-                                            style: const TextStyle(
-                                              fontSize: 13,
-                                              color:
-                                                  AppTheme.textSecondary,
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  name,
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: AppTheme.textPrimary,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  email,
+                                                  style: const TextStyle(
+                                                    fontSize: 13,
+                                                    color:
+                                                        AppTheme.textSecondary,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Container(
+                                            padding:
+                                                const EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 5),
+                                            decoration: BoxDecoration(
+                                              color: (isApproved
+                                                      ? AppTheme.success
+                                                      : AppTheme.warning)
+                                                  .withValues(alpha: 0.12),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              border: Border.all(
+                                                color: (isApproved
+                                                        ? AppTheme.success
+                                                        : AppTheme.warning)
+                                                    .withValues(alpha: 0.5),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              isApproved
+                                                  ? 'APPROVED'
+                                                  : 'PENDING',
+                                              style: TextStyle(
+                                                color: isApproved
+                                                    ? AppTheme.success
+                                                    : AppTheme.warning,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                              ),
                                             ),
                                           ),
                                         ],
                                       ),
-                                    ),
-                                    Container(
-                                      padding:
-                                          const EdgeInsets.symmetric(
-                                              horizontal: 10,
-                                              vertical: 5),
-                                      decoration: BoxDecoration(
-                                        color: (isApproved
-                                                ? AppTheme.success
-                                                : AppTheme.warning)
-                                            .withValues(alpha: 0.12),
-                                        borderRadius:
-                                            BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: (isApproved
-                                                  ? AppTheme.success
-                                                  : AppTheme.warning)
-                                              .withValues(alpha: 0.5),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        children: [
+                                          _InfoChip(
+                                            icon: Icons.check_circle_rounded,
+                                            label: '$completed completed',
+                                            color: AppTheme.success,
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: ElevatedButton.icon(
+                                          onPressed: () =>
+                                              _toggleApproval(agent),
+                                          icon: Icon(
+                                            isApproved
+                                                ? Icons.block_rounded
+                                                : Icons.check_rounded,
+                                            size: 16,
+                                          ),
+                                          label: Text(
+                                              isApproved ? 'Suspend' : 'Approve'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: isApproved
+                                                ? AppTheme.error
+                                                : AppTheme.success,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 10),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                      AppTheme.radiusMd),
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                      child: Text(
-                                        isApproved
-                                            ? 'APPROVED'
-                                            : 'PENDING',
-                                        style: TextStyle(
-                                          color: isApproved
-                                              ? AppTheme.success
-                                              : AppTheme.warning,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                Row(
-                                  children: [
-                                    _InfoChip(
-                                      icon: Icons.check_circle_rounded,
-                                      label: '$completed completed',
-                                      color: AppTheme.success,
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () =>
-                                        _toggleApproval(agent),
-                                    icon: Icon(
-                                      isApproved
-                                          ? Icons.block_rounded
-                                          : Icons.check_rounded,
-                                      size: 16,
-                                    ),
-                                    label: Text(
-                                        isApproved ? 'Suspend' : 'Approve'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: isApproved
-                                          ? AppTheme.error
-                                          : AppTheme.success,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 10),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(
-                                                AppTheme.radiusMd),
-                                      ),
-                                    ),
+                                    ],
                                   ),
                                 ),
-                              ],
-                            ),
+                              )
+                                  .animate(
+                                      delay: Duration(
+                                          milliseconds: index * 70))
+                                  .fadeIn(duration: 350.ms)
+                                  .slideY(
+                                      begin: 0.1,
+                                      end: 0,
+                                      duration: 350.ms,
+                                      curve: Curves.easeOut);
+                            },
                           ),
-                        )
-                            .animate(
-                                delay: Duration(
-                                    milliseconds: index * 70))
-                            .fadeIn(duration: 350.ms)
-                            .slideY(
-                                begin: 0.1,
-                                end: 0,
-                                duration: 350.ms,
-                                curve: Curves.easeOut);
-                      },
-                    ),
+          ),
+        ),
       ),
     );
   }
@@ -1296,6 +1165,206 @@ class _AgentsTabState extends State<_AgentsTab> {
 // ─────────────────────────────────────────────────────────────
 // TAB 4 – HISTORY (Scans + Bookings)
 // ─────────────────────────────────────────────────────────────
+
+class _AgentCreateForm extends StatefulWidget {
+  final VoidCallback onSuccess;
+  const _AgentCreateForm({required this.onSuccess});
+
+  @override
+  State<_AgentCreateForm> createState() => _AgentCreateFormState();
+}
+
+class _AgentCreateFormState extends State<_AgentCreateForm> {
+  final _formKey = GlobalKey<FormState>();
+  final usernameCtrl = TextEditingController();
+  final emailCtrl = TextEditingController();
+  final firstNameCtrl = TextEditingController();
+  final lastNameCtrl = TextEditingController();
+  final phoneCtrl = TextEditingController();
+  final passwordCtrl = TextEditingController();
+  bool submitting = false;
+  bool obscure = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceBg,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      gradient: AppTheme.primaryGradient,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.support_agent_rounded,
+                        color: Colors.white, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Create New Agent',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Agent will be auto-approved and can start accepting bookings.',
+                style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: usernameCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Username *',
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Required' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: firstNameCtrl,
+                      decoration: const InputDecoration(labelText: 'First Name'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextFormField(
+                      controller: lastNameCtrl,
+                      decoration: const InputDecoration(labelText: 'Last Name'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: phoneCtrl,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  labelText: 'Phone Number',
+                  prefixIcon: Icon(Icons.phone_outlined),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: passwordCtrl,
+                obscureText: obscure,
+                decoration: InputDecoration(
+                  labelText: 'Password *',
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    icon: Icon(obscure
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined),
+                    onPressed: () => setState(() => obscure = !obscure),
+                  ),
+                ),
+                validator: (v) =>
+                    (v == null || v.length < 6) ? 'Min 6 characters' : null,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: submitting
+                      ? null
+                      : () async {
+                          if (!_formKey.currentState!.validate()) return;
+                          setState(() => submitting = true);
+                          final resp = await ApiService.createAgentByAdmin({
+                            'username': usernameCtrl.text.trim(),
+                            'email': emailCtrl.text.trim(),
+                            'first_name': firstNameCtrl.text.trim(),
+                            'last_name': lastNameCtrl.text.trim(),
+                            'phone_number': phoneCtrl.text.trim(),
+                            'password': passwordCtrl.text,
+                          });
+                          setState(() => submitting = false);
+                          if (resp['success'] == true) {
+                            widget.onSuccess();
+                          } else {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(resp['message'] ??
+                                      'Failed to create agent'),
+                                  backgroundColor: AppTheme.error,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                    ),
+                  ),
+                  child: submitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Text(
+                          'Create Agent',
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _HistoryTab extends StatefulWidget {
   const _HistoryTab();
@@ -1326,20 +1395,24 @@ class _HistoryTabState extends State<_HistoryTab>
       children: [
         Container(
           color: AppTheme.scaffoldBg,
-          child: TabBar(
-            controller: _tabController,
-            labelColor: AppTheme.primaryColor,
-            unselectedLabelColor: AppTheme.textMuted,
-            indicatorColor: AppTheme.primaryColor,
-            indicatorWeight: 3,
-            labelStyle: const TextStyle(
-                fontWeight: FontWeight.w700, fontSize: 14),
-            unselectedLabelStyle: const TextStyle(
-                fontWeight: FontWeight.w500, fontSize: 14),
-            tabs: const [
-              Tab(text: 'Scan History'),
-              Tab(text: 'Bookings'),
-            ],
+          alignment: Alignment.center,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1000),
+            child: TabBar(
+              controller: _tabController,
+              labelColor: AppTheme.primaryColor,
+              unselectedLabelColor: AppTheme.textMuted,
+              indicatorColor: AppTheme.primaryColor,
+              indicatorWeight: 3,
+              labelStyle:
+                  const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+              unselectedLabelStyle:
+                  const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+              tabs: const [
+                Tab(text: 'Scan History'),
+                Tab(text: 'Bookings'),
+              ],
+            ),
           ),
         ),
         Expanded(
@@ -1406,21 +1479,25 @@ class _ScansSubTabState extends State<_ScansSubTab>
     return RefreshIndicator(
       onRefresh: _loadScans,
       color: AppTheme.primaryColor,
-      child: _loading
-          ? _buildShimmer()
-          : _error != null
-              ? _ErrorBanner(message: _error!, onRetry: _loadScans)
-              : _scans.isEmpty
-                  ? _EmptyState(
-                      icon: Icons.document_scanner_outlined,
-                      message: 'No scans found',
-                    )
-                  : ListView.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      itemCount: _scans.length,
-                      itemBuilder: (context, index) {
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1000),
+          child: _loading
+              ? _buildShimmer()
+              : _error != null
+                  ? _ErrorBanner(message: _error!, onRetry: _loadScans)
+                  : _scans.isEmpty
+                      ? _EmptyState(
+                          icon: Icons.document_scanner_outlined,
+                          message: 'No scans found',
+                        )
+                      : ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          itemCount: _scans.length,
+                          itemBuilder: (context, index) {
                         final scan = _scans[index];
                         final urgency =
                             scan['urgency_level'] ?? 'medium';
@@ -1644,37 +1721,41 @@ class _BookingsSubTabState extends State<_BookingsSubTab>
           color: AppTheme.scaffoldBg,
           padding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: _statuses.map((status) {
-                final selected = _statusFilter == status;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    label: Text(status == 'all'
-                        ? 'ALL'
-                        : status.replaceAll('_', ' ').toUpperCase()),
-                    selected: selected,
-                    onSelected: (_) {
-                      setState(() => _statusFilter = status);
-                      _loadBookings();
-                    },
-                    selectedColor:
-                        AppTheme.primaryColor.withValues(alpha: 0.15),
-                    checkmarkColor: AppTheme.primaryColor,
-                    labelStyle: TextStyle(
-                      color: selected
-                          ? AppTheme.primaryColor
-                          : AppTheme.textSecondary,
-                      fontWeight: selected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
-                      fontSize: 11,
+          alignment: Alignment.center,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1000),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _statuses.map((status) {
+                  final selected = _statusFilter == status;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      label: Text(status == 'all'
+                          ? 'ALL'
+                          : status.replaceAll('_', ' ').toUpperCase()),
+                      selected: selected,
+                      onSelected: (_) {
+                        setState(() => _statusFilter = status);
+                        _loadBookings();
+                      },
+                      selectedColor:
+                          AppTheme.primaryColor.withValues(alpha: 0.15),
+                      checkmarkColor: AppTheme.primaryColor,
+                      labelStyle: TextStyle(
+                        color: selected
+                            ? AppTheme.primaryColor
+                            : AppTheme.textSecondary,
+                        fontWeight: selected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        fontSize: 11,
+                      ),
                     ),
-                  ),
-                );
-              }).toList(),
+                  );
+                }).toList(),
+              ),
             ),
           ),
         ),
@@ -1683,17 +1764,21 @@ class _BookingsSubTabState extends State<_BookingsSubTab>
           child: RefreshIndicator(
             onRefresh: _loadBookings,
             color: AppTheme.primaryColor,
-            child: _loading
-                ? _buildShimmer()
-                : _error != null
-                    ? _ErrorBanner(
-                        message: _error!, onRetry: _loadBookings)
-                    : _bookings.isEmpty
-                        ? _EmptyState(
-                            icon: Icons.book_online_outlined,
-                            message: 'No bookings found',
-                          )
-                        : ListView.builder(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1000),
+                child: _loading
+                    ? _buildShimmer()
+                    : _error != null
+                        ? _ErrorBanner(
+                            message: _error!, onRetry: _loadBookings)
+                        : _bookings.isEmpty
+                            ? _EmptyState(
+                                icon: Icons.book_online_outlined,
+                                message: 'No bookings found',
+                              )
+                            : ListView.builder(
                             physics:
                                 const AlwaysScrollableScrollPhysics(),
                             padding: const EdgeInsets.symmetric(
@@ -2028,3 +2113,187 @@ String _formatDate(String raw) {
     return raw;
   }
 }
+
+class _AdminSideNav extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+  final List<String> labels;
+  final List<IconData> icons;
+  final VoidCallback onLogout;
+
+  const _AdminSideNav({
+    required this.selectedIndex,
+    required this.onSelected,
+    required this.labels,
+    required this.icons,
+    required this.onLogout,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 260,
+      decoration: BoxDecoration(
+        color: AppTheme.cardBg,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(2, 0),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 32),
+          // Logo Section
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    gradient: AppTheme.primaryGradient,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.admin_panel_settings_rounded,
+                      color: Colors.white, size: 24),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'ANTIGRAVITY',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                      Text(
+                        'ADMIN PORTAL',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 48),
+          // Nav Items
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: labels.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final selected = selectedIndex == index;
+                return Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => onSelected(index),
+                    borderRadius: BorderRadius.circular(12),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? AppTheme.primaryColor.withValues(alpha: 0.1)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: selected
+                              ? AppTheme.primaryColor.withValues(alpha: 0.2)
+                              : Colors.transparent,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            icons[index],
+                            color: selected
+                                ? AppTheme.primaryColor
+                                : AppTheme.textMuted,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 16),
+                          Text(
+                            labels[index],
+                            style: TextStyle(
+                              color: selected
+                                  ? AppTheme.primaryColor
+                                  : AppTheme.textSecondary,
+                              fontWeight:
+                                  selected ? FontWeight.w700 : FontWeight.w500,
+                              fontSize: 15,
+                            ),
+                          ),
+                          if (selected) ...[
+                            const Spacer(),
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: AppTheme.primaryColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          // Logout Section
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onLogout,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.error.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.logout_rounded,
+                          color: AppTheme.error, size: 22),
+                      const SizedBox(width: 16),
+                      Text(
+                        'Logout',
+                        style: TextStyle(
+                          color: AppTheme.error,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
