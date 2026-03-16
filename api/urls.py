@@ -56,6 +56,7 @@ urlpatterns = [
     path("admin/stats/", views.admin_stats, name="admin_stats"),
     path("admin/users/", views.admin_users, name="admin_users"),
     path("admin/users/<int:user_id>/role/", views.admin_user_role, name="admin_user_role"),
+    path("admin/users/<int:user_id>/delete/", views.admin_delete_user, name="admin_delete_user"),
     path("admin/agents/", views.admin_agents, name="admin_agents"),
     path("admin/agents/create/", views.admin_create_agent, name="admin_create_agent"),
     path("admin/agents/<int:agent_id>/approve/", views.admin_agent_approve, name="admin_agent_approve"),

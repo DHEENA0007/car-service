@@ -823,6 +823,25 @@ def admin_user_role(request, user_id):
     })
 
 
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def admin_delete_user(request, user_id):
+    """Admin: delete a user account."""
+    if not is_admin(request.user):
+        return Response({"success": False, "message": "Admin access required."}, status=status.HTTP_403_FORBIDDEN)
+
+    if request.user.id == user_id:
+        return Response({"success": False, "message": "You cannot delete your own account."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({"success": False, "message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    user.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def admin_agents(request):
