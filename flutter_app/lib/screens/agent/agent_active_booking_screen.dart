@@ -50,16 +50,21 @@ class _AgentActiveBookingScreenState extends State<AgentActiveBookingScreen> {
   }
 
   Future<void> _loadChargeSheet() async {
+    if (!mounted) return;
     setState(() => _isLoadingChargeSheet = true);
     try {
       final res = await ApiService.getChargeSheet(_booking.id);
-      if (res['success'] == true && mounted) {
+      if (!mounted) return;
+      if (res['success'] == true) {
         setState(() {
           _chargeSheet = ChargeSheetModel.fromMap(
               res['data'] as Map<String, dynamic>);
         });
+      } else {
+        setState(() => _chargeSheet = null);
       }
     } catch (_) {
+      if (mounted) setState(() => _chargeSheet = null);
     } finally {
       if (mounted) setState(() => _isLoadingChargeSheet = false);
     }
@@ -548,6 +553,7 @@ class _AgentActiveBookingScreenState extends State<AgentActiveBookingScreen> {
                       bookingId: _booking.id),
                 ),
               );
+              await _loadChargeSheet();
               _refresh();
             },
             icon: const Icon(Icons.add_rounded, size: 18),
@@ -632,6 +638,7 @@ class _AgentActiveBookingScreenState extends State<AgentActiveBookingScreen> {
                   ),
                 ),
               );
+              await _loadChargeSheet();
               _refresh();
             },
             icon: const Icon(Icons.edit_rounded, size: 18),

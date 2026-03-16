@@ -110,7 +110,7 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
       }
 
       final data = result['data'] as Map<String, dynamic>;
-      final orderId = data['razorpay_order_id'] as String? ?? '';
+      final orderId = data['order_id'] as String? ?? '';
       final amountInPaise = ((payableAmount * 100).round());
 
       final options = <String, dynamic>{
