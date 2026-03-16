@@ -31,6 +31,29 @@
 
   <title>car_service_app</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Razorpay Web Checkout -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    function openRazorpay(optionsJson, onSuccess, onError) {
+      var opts = JSON.parse(optionsJson);
+      opts.handler = function (response) {
+        onSuccess(
+          response.razorpay_payment_id,
+          response.razorpay_order_id,
+          response.razorpay_signature
+        );
+      };
+      opts.modal = {
+        ondismiss: function () { onError('Payment cancelled'); }
+      };
+      var rzp = new Razorpay(opts);
+      rzp.on('payment.failed', function (response) {
+        onError(response.error.description || 'Payment failed');
+      });
+      rzp.open();
+    }
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

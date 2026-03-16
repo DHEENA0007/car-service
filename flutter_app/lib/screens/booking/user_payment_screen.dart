@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../../utils/theme.dart';
 import '../../models/booking_model.dart';
 import '../../services/api_service.dart';
+import '../../services/razorpay_stub.dart'
+    if (dart.library.js) '../../services/razorpay_web.dart';
 
 const String _kRazorpayKeyId = 'rzp_test_SL5EZ7JYyCLRiq';
 
@@ -113,16 +116,56 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
           'contact': _booking!.contactPhone,
           'name': _booking!.contactName,
         },
-        'theme': {
-          'color': '#0061FF',
-        },
+        'theme': {'color': '#0061FF'},
       };
 
-      _razorpay.open(options);
+      if (kIsWeb) {
+        openRazorpayWeb(
+          options: options,
+          onSuccess: (paymentId, ordId, signature) {
+            _handleWebPaymentSuccess(paymentId, ordId, signature);
+          },
+          onError: (error) {
+            if (mounted) {
+              setState(() => _isProcessingPayment = false);
+              _showError(error);
+            }
+          },
+        );
+      } else {
+        _razorpay.open(options);
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _isProcessingPayment = false);
         _showError('Failed to initiate payment. Please try again.');
+      }
+    }
+  }
+
+  void _handleWebPaymentSuccess(
+      String paymentId, String orderId, String signature) async {
+    if (!mounted) return;
+    setState(() => _isProcessingPayment = true);
+    try {
+      final verifyResult = await ApiService.verifyPayment(
+        bookingId: widget.bookingId,
+        paymentId: paymentId,
+        orderId: orderId,
+        signature: signature,
+      );
+      if (!mounted) return;
+      setState(() => _isProcessingPayment = false);
+      if (verifyResult['success'] == true) {
+        await _showPaymentSuccessDialog();
+        if (mounted) Navigator.pop(context, true);
+      } else {
+        _showError(verifyResult['message'] ?? 'Payment verification failed.');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProcessingPayment = false);
+        _showError('Payment verification error. Please contact support.');
       }
     }
   }
