@@ -515,6 +515,15 @@ class ApiService {
     return jsonDecode(response.body);
   }
 
+  static Future<Map<String, dynamic>> deleteUser(int userId) async {
+    final response = await http.delete(
+      Uri.parse('${AppConstants.baseUrl}/admin/users/$userId/delete/'),
+      headers: _headers(),
+    );
+    if (response.statusCode == 204) return {'success': true};
+    return jsonDecode(response.body);
+  }
+
   static Future<Map<String, dynamic>> getAdminAgents() async {
     final response = await http.get(
       Uri.parse('${AppConstants.baseUrl}/admin/agents/'),

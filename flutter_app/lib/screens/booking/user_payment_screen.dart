@@ -20,7 +20,7 @@ class UserPaymentScreen extends StatefulWidget {
 }
 
 class _UserPaymentScreenState extends State<UserPaymentScreen> {
-  late Razorpay _razorpay;
+  Razorpay? _razorpay;
 
   BookingModel? _booking;
   ChargeSheetModel? _chargeSheet;
@@ -31,15 +31,17 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
   @override
   void initState() {
     super.initState();
-    _razorpay = Razorpay();
-    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    if (!kIsWeb) {
+      _razorpay = Razorpay();
+      _razorpay!.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+      _razorpay!.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    }
     _loadData();
   }
 
   @override
   void dispose() {
-    _razorpay.clear();
+    _razorpay?.clear();
     super.dispose();
   }
 
@@ -82,9 +84,16 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
   }
 
   Future<void> _initiatePayment() async {
-    if (_booking == null || _chargeSheet == null) return;
+    if (_booking == null) return;
     if (_booking!.isPaid) {
       _showInfo('This booking has already been paid.');
+      return;
+    }
+
+    final payableAmount =
+        _chargeSheet?.totalAmount ?? _booking!.chargeSheetTotal;
+    if (payableAmount == null || payableAmount <= 0) {
+      _showError('Payment amount is not available. Please try again.');
       return;
     }
 
@@ -102,7 +111,7 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
 
       final data = result['data'] as Map<String, dynamic>;
       final orderId = data['razorpay_order_id'] as String? ?? '';
-      final amountInPaise = ((_chargeSheet!.totalAmount * 100).round());
+      final amountInPaise = ((payableAmount * 100).round());
 
       final options = <String, dynamic>{
         'key': _kRazorpayKeyId,
@@ -133,7 +142,7 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
           },
         );
       } else {
-        _razorpay.open(options);
+        _razorpay?.open(options);
       }
     } catch (e) {
       if (mounted) {
@@ -239,7 +248,7 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Your payment of ₹${_chargeSheet?.totalAmount.toStringAsFixed(2)} has been confirmed.',
+              'Your payment of ₹${(_chargeSheet?.totalAmount ?? _booking?.chargeSheetTotal)?.toStringAsFixed(2) ?? ''} has been confirmed.',
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 14,
@@ -360,8 +369,8 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
                         size: 20, color: Colors.white),
                     const SizedBox(width: 10),
                     Text(
-                      _chargeSheet != null
-                          ? 'Pay ₹${_chargeSheet!.totalAmount.toStringAsFixed(2)}'
+                      (_chargeSheet?.totalAmount ?? _booking!.chargeSheetTotal) != null
+                          ? 'Pay ₹${(_chargeSheet?.totalAmount ?? _booking!.chargeSheetTotal)!.toStringAsFixed(2)}'
                           : 'Pay Now',
                       style: const TextStyle(
                         fontSize: 16,

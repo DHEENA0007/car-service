@@ -600,6 +600,66 @@ class _UsersTabState extends State<_UsersTab> {
     }
   }
 
+  Future<void> _deleteUser(Map<String, dynamic> user) async {
+    final username = user['username'] ?? 'this user';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg)),
+        title: const Text('Delete User'),
+        content: Text(
+            'Are you sure you want to delete "$username"? This cannot be undone.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style:
+                ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+    try {
+      final id = user['id'] as int;
+      final resp = await ApiService.deleteUser(id);
+      if (!mounted) return;
+      if (resp['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$username deleted'),
+            backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        _loadUsers();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(resp['message'] ?? 'Failed to delete user'),
+            backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   Color _roleColor(String role) {
     switch (role) {
       case 'admin':
@@ -729,31 +789,45 @@ class _UsersTabState extends State<_UsersTab> {
                                       color: AppTheme.textSecondary,
                                     ),
                                   ),
-                                  trailing: GestureDetector(
-                                    onTap: () => _changeRole(user),
-                                    child: Container(
-                                      padding:
-                                          const EdgeInsets.symmetric(
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () => _changeRole(user),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
                                               horizontal: 10, vertical: 5),
-                                      decoration: BoxDecoration(
-                                        color: _roleColor(role)
-                                            .withValues(alpha: 0.12),
-                                        borderRadius:
-                                            BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: _roleColor(role)
-                                              .withValues(alpha: 0.4),
+                                          decoration: BoxDecoration(
+                                            color: _roleColor(role)
+                                                .withValues(alpha: 0.12),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            border: Border.all(
+                                              color: _roleColor(role)
+                                                  .withValues(alpha: 0.4),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            role.toUpperCase(),
+                                            style: TextStyle(
+                                              color: _roleColor(role),
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                      child: Text(
-                                        role.toUpperCase(),
-                                        style: TextStyle(
-                                          color: _roleColor(role),
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                        ),
+                                      const SizedBox(width: 8),
+                                      IconButton(
+                                        icon: const Icon(
+                                            Icons.delete_outline_rounded,
+                                            color: AppTheme.error,
+                                            size: 20),
+                                        tooltip: 'Delete user',
+                                        onPressed: () => _deleteUser(user),
+                                        visualDensity: VisualDensity.compact,
                                       ),
-                                    ),
+                                    ],
                                   ),
                                   onTap: () => _changeRole(user),
                                 ),

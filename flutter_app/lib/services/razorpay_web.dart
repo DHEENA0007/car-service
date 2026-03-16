@@ -15,7 +15,11 @@ void openRazorpayWeb({
 }) {
   _jsOpenRazorpay(
     jsonEncode(options),
-    ((String p, String o, String s) => onSuccess(p, o, s)).toJS,
-    ((String e) => onError(e)).toJS,
+    ((JSAny? p, JSAny? o, JSAny? s) => onSuccess(
+          p?.toString() ?? '',
+          o?.toString() ?? '',
+          s?.toString() ?? '',
+        )).toJS,
+    ((JSAny? e) => onError(e?.toString() ?? 'Payment failed.')).toJS,
   );
 }
