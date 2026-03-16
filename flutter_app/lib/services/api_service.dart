@@ -412,7 +412,11 @@ class ApiService {
       Uri.parse('${AppConstants.baseUrl}/bookings/$bookingId/'),
       headers: _headers(),
     );
-    return jsonDecode(response.body);
+    try {
+      return jsonDecode(response.body);
+    } catch (_) {
+      return {'success': false, 'message': 'Server error (${response.statusCode})'};
+    }
   }
 
   static Future<Map<String, dynamic>> acceptBooking(int bookingId) async {
@@ -444,11 +448,15 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> getChargeSheet(int bookingId) async {
-    final response = await http.get(
-      Uri.parse('${AppConstants.baseUrl}/charge-sheets/$bookingId/'),
-      headers: _headers(),
-    );
-    return jsonDecode(response.body);
+    try {
+      final response = await http.get(
+        Uri.parse('${AppConstants.baseUrl}/charge-sheets/$bookingId/'),
+        headers: _headers(),
+      );
+      return jsonDecode(response.body);
+    } catch (_) {
+      return {'success': false, 'message': 'No charge sheet found'};
+    }
   }
 
   // ============ Payments ============

@@ -45,45 +45,37 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
       _isLoadingData = true;
       _error = null;
     });
+
+    BookingModel? booking;
+    ChargeSheetModel? chargeSheet;
+
+    // Load booking detail
     try {
-      final results = await Future.wait([
-        ApiService.getBookingDetail(widget.bookingId),
-        ApiService.getChargeSheet(widget.bookingId),
-      ]);
-
-      if (!mounted) return;
-
-      final bookingResult = results[0];
-      final chargeResult = results[1];
-
-      BookingModel? booking;
-      ChargeSheetModel? chargeSheet;
-
+      final bookingResult = await ApiService.getBookingDetail(widget.bookingId);
       if (bookingResult['success'] == true) {
         booking = BookingModel.fromMap(
             bookingResult['data'] as Map<String, dynamic>);
       }
+    } catch (_) {}
+
+    // Load charge sheet separately — may not exist yet
+    try {
+      final chargeResult = await ApiService.getChargeSheet(widget.bookingId);
       if (chargeResult['success'] == true) {
         chargeSheet = ChargeSheetModel.fromMap(
             chargeResult['data'] as Map<String, dynamic>);
       }
+    } catch (_) {}
 
-      setState(() {
-        _booking = booking;
-        _chargeSheet = chargeSheet;
-        _isLoadingData = false;
-        if (booking == null) {
-          _error = 'Failed to load booking details.';
-        }
-      });
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = 'Connection error. Please try again.';
-          _isLoadingData = false;
-        });
+    if (!mounted) return;
+    setState(() {
+      _booking = booking;
+      _chargeSheet = chargeSheet;
+      _isLoadingData = false;
+      if (booking == null) {
+        _error = 'Failed to load booking details. Check your connection.';
       }
-    }
+    });
   }
 
   Future<void> _initiatePayment() async {
