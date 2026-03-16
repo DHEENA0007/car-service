@@ -556,72 +556,37 @@ class ApiService {
     return jsonDecode(response.body);
   }
 
-  // ============ Vehicle Data (local asset, NHTSA fallback) ============
+  // ============ Vehicle Data (local asset only) ============
 
   static Map<String, dynamic>? _vehicleData;
 
   static Future<Map<String, dynamic>> _loadVehicleData() async {
-    _vehicleData ??= jsonDecode(
-      await rootBundle.loadString('assets/vehicle_data.json'),
-    ) as Map<String, dynamic>;
+    if (_vehicleData != null) return _vehicleData!;
+    final jsonStr = await rootBundle.loadString('assets/vehicle_data.json');
+    _vehicleData = await compute(
+      (String s) => jsonDecode(s) as Map<String, dynamic>,
+      jsonStr,
+    );
     return _vehicleData!;
   }
 
   static Future<List<String>> getCarMakes() async {
-    try {
-      final data = await _loadVehicleData();
-      final makes = (data['makes'] as List?)?.cast<String>() ?? [];
-      return makes;
-    } catch (_) {}
-    // fallback to network
-    try {
-      final response = await http.get(
-        Uri.parse('https://vpic.nhtsa.dot.gov/api/vehicles/getallmakes?format=json'),
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final results = data['Results'] as List? ?? [];
-        return results
-            .map((e) => (e['Make_Name'] as String).trim())
-            .where((name) => name.isNotEmpty)
-            .toSet()
-            .toList()
-          ..sort();
-      }
-    } catch (_) {}
-    return [];
+    final data = await _loadVehicleData();
+    final modelsMap = data['models'] as Map<String, dynamic>? ?? {};
+    return modelsMap.keys.toList()..sort();
   }
 
   static Future<List<String>> getCarModels(String make) async {
     if (make.isEmpty) return [];
-    try {
-      final data = await _loadVehicleData();
-      final modelsMap = data['models'] as Map<String, dynamic>? ?? {};
-      // Case-insensitive lookup
-      final key = modelsMap.keys.firstWhere(
-        (k) => k.toLowerCase() == make.toLowerCase(),
-        orElse: () => '',
-      );
-      if (key.isNotEmpty) {
-        return (modelsMap[key] as List).cast<String>();
-      }
-    } catch (_) {}
-    // fallback to network for makes not in local asset
-    try {
-      final response = await http.get(
-        Uri.parse('https://vpic.nhtsa.dot.gov/api/vehicles/getmodelsformake/$make?format=json'),
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final results = data['Results'] as List? ?? [];
-        return results
-            .map((e) => (e['Model_Name'] as String).trim())
-            .where((name) => name.isNotEmpty)
-            .toSet()
-            .toList()
-          ..sort();
-      }
-    } catch (_) {}
+    final data = await _loadVehicleData();
+    final modelsMap = data['models'] as Map<String, dynamic>? ?? {};
+    final key = modelsMap.keys.firstWhere(
+      (k) => k.toLowerCase() == make.toLowerCase(),
+      orElse: () => '',
+    );
+    if (key.isNotEmpty) {
+      return (modelsMap[key] as List).cast<String>()..sort();
+    }
     return [];
   }
 }
